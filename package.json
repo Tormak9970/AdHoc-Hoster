@@ -1,7 +1,7 @@
 {
-  "name": "quick-start",
+  "name": "adhoc-hoster",
   "version": "1.0.0",
-  "description": "A modified plugin template that will help you get started faster.",
+  "description": "A Steamdeck plugin for easy Ad-Hoc network hosting from GameMode.",
   "scripts": {
     "build": "shx rm -rf dist && rollup -c",
     "watch": "rollup -c -w",
@@ -10,13 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Tormak9970/Decky-QuickStart.git"
+    "url": "git+https://github.com/Tormak9970/AdHoc-Hoster.git"
   },
   "keywords": [
     "decky",
     "plugin",
-    "steam-deck",
-    "template"
+    "local-coop",
+    "adhoc",
+    "offline"
   ],
   "author": {
     "name": "Travis Lane (Tormak)",
@@ -24,9 +25,9 @@
   },
   "license": "GPL-3",
   "bugs": {
-    "url": "https://github.com/Tormak9970/Decky-QuickStart/issues"
+    "url": "https://github.com/Tormak9970/AdHoc-Hoster/issues"
   },
-  "homepage": "https://github.com/Tormak9970/Decky-QuickStart#readme",
+  "homepage": "https://github.com/Tormak9970/AdHoc-Hoster#readme",
   "devDependencies": {
     "@commitlint/cli": "^17.6.7",
     "@commitlint/config-conventional": "^17.6.7",

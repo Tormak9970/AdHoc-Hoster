@@ -1,10 +1,15 @@
 {
-  "name": "QuickStart",
+  "name": "AdHoc-Hoster",
   "author": "Travis Lane (Tormak)",
   "flags": ["debug"],
   "publish": {
-    "tags": ["Template"],
-    "description": "A modified plugin template that will help you get started faster.",
-    "image": "https://raw.githubusercontent.com/Tormak9970/Decky-QuickStart/main/assets/logo.png"
+    "tags": [
+      "networking",
+      "local-coop",
+      "adhoc",
+      "offline"
+    ],
+    "description": "A Steamdeck plugin for easy Ad-Hoc network hosting from GameMode.",
+    "image": "https://raw.githubusercontent.com/Tormak9970/AdHoc-Hoster/main/assets/logo.png"
   }
 }
