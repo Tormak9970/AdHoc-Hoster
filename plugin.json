@@ -1,7 +1,7 @@
 {
   "name": "AdHoc-Hoster",
   "author": "Travis Lane (Tormak)",
-  "flags": ["debug"],
+  "flags": ["debug", "root"],
   "publish": {
     "tags": [
       "networking",

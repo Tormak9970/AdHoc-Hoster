@@ -132,12 +132,39 @@ export class PythonInterop {
   }
 
 
-  static async startNetwork(): Promise<boolean> {
-    return false
+  /**
+   * Starts the AdHoc network.
+   * @returns Whether the network was successfully started, or an error if the interop request failed.
+   */
+  static async startNetwork(): Promise<boolean | Error> {
+    const result = await this.serverAPI.callPluginMethod<{}, boolean>("start_network", {});
+
+    if (result.success) {
+      return result.result;
+    } else {
+      return new Error(result.result);
+    }
   }
 
-  static async killNetwork(): Promise<boolean> {
-    return false
+  /**
+   * Kills the AdHoc network.
+   * @returns Whether the network was successfully killed, or an error if the interop request failed.
+   */
+  static async killNetwork(): Promise<boolean | Error> {
+    const result = await this.serverAPI.callPluginMethod<{}, boolean>("kill_network", {});
+
+    if (result.success) {
+      return result.result;
+    } else {
+      return new Error(result.result);
+    }
+  }
+
+  /**
+   * Subscribes to updates to the AdHoc network.
+   */
+  static async subscribeToConnection() {
+
   }
 
 

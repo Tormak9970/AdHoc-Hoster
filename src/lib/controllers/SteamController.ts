@@ -70,4 +70,13 @@ export class SteamController {
       return success;
     })) ?? false;
   }
+
+  /**
+   * Register a function for when the Steamdeck resumes from sleep.
+   * @param callback The callback to register.
+   * @returns A function that unsubscribes the callback.
+   */
+  registerForOnResumeFromSuspend(callback: () => void): Unregisterer {
+    return SteamClient.System.RegisterForOnResumeFromSuspend(callback);
+  }
 }

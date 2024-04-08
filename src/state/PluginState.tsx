@@ -1,27 +1,54 @@
 // * All of your state property types go here.
 export interface PublicPluginState {
-  buttonLabel: string
+  isNetworkRunning: boolean,
+  networkName: string,
+  networkPassword: string,
+  connectedDevices: string[]
 }
 
 // * All of your state setter types go here.
 export interface PublicPluginContext extends PublicPluginState {
-  setButtonLabel(label: string): void;
+  setIsNetworkRunning(isRunning: boolean): void,
+  setNetworkName(name: string): void,
+  setNetworkPassword(password: string): void,
+  setConnectedDevices(connectedDevices: string[]): void
 }
 
 // * Define your property defaults and setter logic here.
 export class PluginState {
-  private buttonLabel: string = "Click Me";
+  private isNetworkRunning = false;
+  private networkName = "";
+  private networkPassword = "";
+  private connectedDevices: string[] = [];
 
   public eventBus = new EventTarget();
 
   getPublicState() {
     return {
-      "buttonLabel": this.buttonLabel
+      "isNetworkRunning": this.isNetworkRunning,
+      "networkName": this.networkName,
+      "networkPassword": this.networkPassword,
+      "connectedDevices": this.connectedDevices
     }
   }
 
-  setButtonLabel(label: string): void {
-    this.buttonLabel = label;
+  setIsNetworkRunning(isRunning: boolean): void {
+    this.isNetworkRunning = isRunning;
+    this.forceUpdate();
+  }
+
+  setNetworkName(name: string): void {
+    this.networkName = name;
+    this.forceUpdate();
+  }
+
+  setNetworkPassword(password: string): void {
+    this.networkPassword = password;
+    this.forceUpdate();
+  }
+
+  setConnectedDevices(devices: string[]): void {
+    this.connectedDevices = devices;
     this.forceUpdate();
   }
 

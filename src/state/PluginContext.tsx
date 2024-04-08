@@ -27,15 +27,19 @@ export const PluginContextProvider: FC<ProviderProps> = ({
   }, []);
 
   // * Put all of your setter wrappers here.
-  const setButtonLabel = (label: string) => {
-    PluginStateClass.setButtonLabel(label);
-  }
+  const setIsNetworkRunning = (isRunning: boolean) => PluginStateClass.setIsNetworkRunning(isRunning);
+  const setNetworkName = (name: string) => PluginStateClass.setNetworkName(name);
+  const setNetworkPassword = (password: string) => PluginStateClass.setNetworkPassword(password);
+  const setConnectedDevices = (devices: string[]) => PluginStateClass.setConnectedDevices(devices);
 
   return (
     <PluginContext.Provider
       value={{
         ...publicState,
-        setButtonLabel
+        setIsNetworkRunning,
+        setNetworkName,
+        setNetworkPassword,
+        setConnectedDevices
       }}
     >
       {children}

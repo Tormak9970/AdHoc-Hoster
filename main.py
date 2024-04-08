@@ -1,4 +1,5 @@
 import asyncio
+import subprocess
 import os
 import codecs
 import decky_plugin
@@ -26,6 +27,11 @@ def obfuscate(value: str) -> str:
 def deobfuscate(obfuscated: str) -> str:
   return codecs.decode(obfuscated, "rot13")
 
+
+def run_bash_command(command: list[str]) -> str | None:
+  return subprocess.run(command, capture_output=True, text=True).stdout
+
+
 class Plugin:
   user_id: str = None
   users_dict: dict[str, dict] = None
@@ -43,10 +49,19 @@ class Plugin:
     elif level == 2:
       error(message)
 
+  async def subscribe_to_network_updates(self) -> None:
+    return
+
   async def start_network(self) -> bool:
+    result = run_bash_command([f"sudo nmcli dev wifi hotspot ifname wlan0 ssid \"{Plugin.network_name}\" password \"{Plugin.network_password}\""])
+    
+    # TODO: Check if the output is correct
     return False
   
   async def kill_network(self) -> bool:
+    result = run_bash_command([f"sudo nmcli connection down \"{Plugin.network_name}\""])
+    
+    # TODO: Check if the output is correct
     return False
 
   # * Plugin settings getters
@@ -88,7 +103,7 @@ class Plugin:
     return Plugin.network_password or ""
 
   # * Plugin settings setters
-  async def set_active_user_id(self, user_id: str):
+  async def set_active_user_id(self, user_id: str) -> bool:
     """
     Sets the active user id
 
@@ -109,6 +124,8 @@ class Plugin:
         "networkPassword": ""
       }
       await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
+
+    return True
 
   async def set_network_name(self, net_name: str):
     """

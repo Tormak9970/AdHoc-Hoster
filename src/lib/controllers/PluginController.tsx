@@ -3,6 +3,7 @@ import { PythonInterop } from "./PythonInterop";
 import { SteamController } from "./SteamController";
 import { LogController } from "./LogController";
 import { PluginState } from "../../state/PluginState";
+import { getCurrentUserId } from "../Utils";
 
 /**
  * Main controller class for the plugin.
@@ -16,12 +17,14 @@ export class PluginController {
 
   private static steamController: SteamController;
 
+  private static onWakeSub: Unregisterer;
+
   /**
    * Sets the plugin's serverAPI.
    * @param server The serverAPI to use.
    */
   static setup(server: ServerAPI, pluginState: PluginState): void {
-    LogController.setup("QuickStart", "ff3e00");
+    LogController.setup("AdHoc-Hoster", "90f709");
 
     this.server = server;
     this.pluginState = pluginState;
@@ -55,8 +58,26 @@ export class PluginController {
    */
   static async init(): Promise<void> {
     LogController.log("PluginController initialized.");
+
+    await PythonInterop.setActiveSteamId(getCurrentUserId());
     
-    // TODO: perform any logic you want to run when the plugin first initializes here.
+    this.onWakeSub = this.steamController.registerForOnResumeFromSuspend(this.onWakeFromSleep.bind(this));
+    // TODO: other subs here
+  }
+
+  static async onShutdown() {
+    // ? May need this, not sure
+  }
+
+  static async onSleep() {
+    // ? May need this, not sure
+  }
+
+  /**
+   * Function to run when resuming from sleep.
+   */
+  static async onWakeFromSleep() {
+    // TODO: check if the network was running before the device was put to sleep
   }
 
   /**
