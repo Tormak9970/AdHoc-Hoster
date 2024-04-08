@@ -7,7 +7,7 @@ import { VFC } from "react";
 export const QamStyles: VFC<{}> = ({}) => {
   return (
     <style>{`
-      .quick-start-scope {
+      .adhoc-hoster-scope {
         width: inherit;
         height: inherit;
 
@@ -19,26 +19,26 @@ export const QamStyles: VFC<{}> = ({}) => {
         align-content: stretch;
       }
 
-      .quick-start-scope .${quickAccessControlsClasses.PanelSection} {
+      .adhoc-hoster-scope .${quickAccessControlsClasses.PanelSection} {
         padding: 0px;
         margin: 0px;
         width: 100%;
       }
 
-      .quick-start-scope .${quickAccessControlsClasses.PanelSectionTitle} {
+      .adhoc-hoster-scope .${quickAccessControlsClasses.PanelSectionTitle} {
         margin-top: 3px;
         margin-left: 16px;
       }
 
-      .quick-start-scope .${gamepadDialogClasses.FieldDescription} {
+      .adhoc-hoster-scope .${gamepadDialogClasses.FieldDescription} {
         margin: 0px 16px;
         margin-top: 5px;
       }
-      .quick-start-scope .${gamepadDialogClasses.FieldLabel} {
+      .adhoc-hoster-scope .${gamepadDialogClasses.FieldLabel} {
         margin-left: 16px;
       }
 
-      .quick-start-scope .seperator {
+      .adhoc-hoster-scope .seperator {
         width: 100%;
         height: 1px;
         background: #23262e;

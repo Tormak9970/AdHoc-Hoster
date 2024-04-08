@@ -2,7 +2,8 @@
 
 
 # ! Creating / Killing hotspot
-# ! Need to test if adding " --offline" works
+# ? Need to test if adding " --offline" works
+# * seems to not work
 
 NAME="Steamdeck"
 PASSWORD="test1234"
