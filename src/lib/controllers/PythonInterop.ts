@@ -44,11 +44,25 @@ export class PythonInterop {
   }
   
   /**
-   * Gets the demo value from the plugin settings.
-   * @returns The demo value, or an error if it failed
+   * Gets the plugin's users dictionary.
+   * @returns A promise resolving to the plugin's users dictionary.
    */
-  static async getDemo(): Promise<string | Error> {
-    const result = await this.serverAPI.callPluginMethod<{}, string>("get_demo", {});
+  static async getUsersDict(): Promise<UsersDict | Error> {
+    const result = await this.serverAPI.callPluginMethod<{}, UsersDict>("get_users_dict", {});
+
+    if (result.success) {
+      return result.result;
+    } else {
+      return new Error(result.result);
+    }
+  }
+  
+  /**
+   * Sends the active user's steamID to the backend.
+   * @returns A promise resolving to the plugin's users dictionary.
+   */
+  static async setActiveSteamId(userId: string): Promise<boolean | Error> {
+    const result = await this.serverAPI.callPluginMethod<{ user_id: string }, boolean>("set_active_user_id", { user_id: userId});
 
     if (result.success) {
       return result.result;
@@ -57,13 +71,43 @@ export class PythonInterop {
     }
   }
 
+  
   /**
-   * Sets the plugin's demo settings.
-   * @param demo The plugin's demo settings.
-   * @returns A promise resolving to whether or not the demo settings were successfully set.
+   * Gets the user's network name from the plugin settings.
+   * @returns The network name, or an error if it failed
    */
-  static async setDemo(demo: string): Promise<void | Error> {
-    let result = await PythonInterop.serverAPI.callPluginMethod<{ demo: string, }, void>("set_demo", { demo: demo });
+  static async getNetworkName(): Promise<string | Error> {
+    const result = await this.serverAPI.callPluginMethod<{}, string>("get_network_name", {});
+
+    if (result.success) {
+      return result.result;
+    } else {
+      return new Error(result.result);
+    }
+  }
+  
+  /**
+   * Gets the user's network password from the plugin settings.
+   * @returns The network password, or an error if it failed
+   */
+  static async getNetworkPassword(): Promise<string | Error> {
+    const result = await this.serverAPI.callPluginMethod<{}, string>("get_network_password", {});
+
+    if (result.success) {
+      return result.result;
+    } else {
+      return new Error(result.result);
+    }
+  }
+
+
+  /**
+   * Sets the user's network name.
+   * @param networkName The user's network name.
+   * @returns A promise resolving to whether or not the network name was successfully set.
+   */
+  static async setNetworkName(networkName: string): Promise<void | Error> {
+    let result = await PythonInterop.serverAPI.callPluginMethod<{ network_name: string, }, void>("set_network_name", { network_name: networkName });
 
     if (result.success) {
       return result.result;
@@ -71,6 +115,31 @@ export class PythonInterop {
       return new Error(result.result);
     };
   }
+
+  /**
+   * Sets the user's network password.
+   * @param networkPassword The user's network password.
+   * @returns A promise resolving to whether or not the network password was successfully set.
+   */
+  static async setNetworkPassword(networkPassword: string): Promise<void | Error> {
+    let result = await PythonInterop.serverAPI.callPluginMethod<{ network_password: string, }, void>("set_network_password", { network_password: networkPassword });
+
+    if (result.success) {
+      return result.result;
+    } else {
+      return new Error(result.result);
+    };
+  }
+
+
+  static async startNetwork(): Promise<boolean> {
+    return false
+  }
+
+  static async killNetwork(): Promise<boolean> {
+    return false
+  }
+
 
   /**
    * Shows a toast message.

@@ -19,3 +19,16 @@ declare module "*.jpg" {
 type Unregisterer = {
   unregister: () => void;
 }
+
+type DocPages = {
+  [key: string]: string
+}
+
+type UsersDict = {
+  [userId: string]: {
+    tabs: TabSettingsDictionary,
+    friends: FriendEntry[],
+    friendsGames: Map<number, number[]>
+  }
+}
+
