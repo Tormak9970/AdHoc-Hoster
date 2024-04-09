@@ -33,6 +33,9 @@ def run_bash_command(command: list[str]) -> str | None:
 
 
 class Plugin:
+  network_updates: list[str] = [] # * Will function like a stack
+  should_monitor: bool = False
+
   user_id: str = None
   users_dict: dict[str, dict] = None
 
@@ -40,6 +43,7 @@ class Plugin:
   network_password: str = None
 
   settings: SettingsManager
+
 
   async def logMessage(self, message, level):
     if level == 0:
@@ -49,20 +53,76 @@ class Plugin:
     elif level == 2:
       error(message)
 
-  async def subscribe_to_network_updates(self) -> None:
-    return
+
+  async def monitor_network_updates(self):
+    wait_time = 0.5 # TODO: find a good time balance
+    monitored_process = None
+
+    while True:
+      await asyncio.sleep(wait_time)
+
+      if Plugin.should_monitor:
+        # * start monitoring if needed
+        if monitored_process is None:
+          monitored_process = subprocess.Popen(["nmcli connection monitor", Plugin.network_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="text")
+          log(f"Started monitoring {Plugin.network_name}")
+        else:
+          try:
+            update, err = monitored_process.communicate()
+            if update != "":
+              Plugin.network_updates.append(update)
+              log(f"Recieved network update {update}")
+          except subprocess.TimeoutExpired:
+            continue
+      else:
+        monitored_process = None
+        Plugin.network_updates = []
+
+
+  async def get_next_network_update(self) -> str:
+    """
+    Waits until there is a network update available, then returns it
+
+    @returns The network update
+    """
+    while Plugin.network_updates.count() == 0:
+      await asyncio.sleep(0.1)
+      
+    update = list.pop(0)
+    log(f"Sending update {update}")
+    return update
 
   async def start_network(self) -> bool:
-    result = run_bash_command([f"sudo nmcli dev wifi hotspot ifname wlan0 ssid \"{Plugin.network_name}\" password \"{Plugin.network_password}\""])
+    success = False
+    result = "placeholder"
     
-    # TODO: Check if the output is correct
-    return False
+    # * check if the network already exits:
+    connection_status = run_bash_command([f"sudo nmcli -f connection.id connection status \"{Plugin.network_name}\""])
+    network_exists = Plugin.network_name in connection_status
+
+    if network_exists:
+      # result = run_bash_command([f"sudo nmcli connection up \"{Plugin.network_name}\" ifname wlan0"])
+      result = run_bash_command([f"sudo nmcli connection up \"{Plugin.network_name}\""])
+    else:
+      # result = run_bash_command([f"sudo nmcli dev wifi hotspot ifname wlan0 ssid \"{Plugin.network_name}\" password \"{Plugin.network_password}\""])
+      result = run_bash_command([f"sudo nmcli dev wifi con \"{Plugin.network_name}\" password \"{Plugin.network_password}\""])
+    
+    log(result)
+
+    if result != "placeholder" and "successfully activated" in result:
+      success = True
+      Plugin.should_monitor = True
+
+    return success
   
   async def kill_network(self) -> bool:
     result = run_bash_command([f"sudo nmcli connection down \"{Plugin.network_name}\""])
+    Plugin.should_monitor = False
     
-    # TODO: Check if the output is correct
-    return False
+    log(result)
+    
+    return "successfully deactivated" in result
+
 
   # * Plugin settings getters
   async def get_users_dict(self) -> dict[str, dict] | None:
@@ -101,6 +161,7 @@ class Plugin:
     Plugin.network_password = deobfuscate(Plugin.users_dict[Plugin.user_id]["networkPassword"])
     
     return Plugin.network_password or ""
+
 
   # * Plugin settings setters
   async def set_active_user_id(self, user_id: str) -> bool:
@@ -202,6 +263,8 @@ class Plugin:
     await Plugin.read(self)
 
     log("Initializing AdHoc Hoster.")
+
+    await Plugin.monitor_network_updates(self)
 
 
   # * Function called first during the unload process, utilize this to handle your plugin being removed
