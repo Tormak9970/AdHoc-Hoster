@@ -5,32 +5,32 @@ const PluginContext = createContext<PublicPluginContext>(null as any);
 export const usePluginState = () => useContext(PluginContext);
 
 interface ProviderProps {
-  PluginStateClass: PluginState
+  pluginState: PluginState
 }
 
 export const PluginContextProvider: FC<ProviderProps> = ({
   children,
-  PluginStateClass
+  pluginState
 }) => {
-  const [publicState, setPublicState] = useState<PublicPluginState>({ ...PluginStateClass.getPublicState() });
+  const [publicState, setPublicState] = useState<PublicPluginState>({ ...pluginState.getPublicState() });
 
   useEffect(() => {
     function onUpdate() {
-      setPublicState({ ...PluginStateClass.getPublicState() });
+      setPublicState({ ...pluginState.getPublicState() });
     }
 
-    PluginStateClass.eventBus.addEventListener("stateUpdate", onUpdate);
+    pluginState.eventBus.addEventListener("stateUpdate", onUpdate);
 
     return () => {
-      PluginStateClass.eventBus.removeEventListener("stateUpdate", onUpdate);
+      pluginState.eventBus.removeEventListener("stateUpdate", onUpdate);
     }
   }, []);
 
   // * Put all of your setter wrappers here.
-  const setIsNetworkRunning = (isRunning: boolean) => PluginStateClass.setIsNetworkRunning(isRunning);
-  const setNetworkName = (name: string) => PluginStateClass.setNetworkName(name);
-  const setNetworkPassword = (password: string) => PluginStateClass.setNetworkPassword(password);
-  const setConnectedDevices = (devices: string[]) => PluginStateClass.setConnectedDevices(devices);
+  const setIsNetworkRunning = (isRunning: boolean) => pluginState.setIsNetworkRunning(isRunning);
+  const setNetworkName = (name: string) => pluginState.setNetworkName(name);
+  const setNetworkPassword = (password: string) => pluginState.setNetworkPassword(password);
+  const setConnectedDevices = (devices: string[]) => pluginState.setConnectedDevices(devices);
 
   return (
     <PluginContext.Provider

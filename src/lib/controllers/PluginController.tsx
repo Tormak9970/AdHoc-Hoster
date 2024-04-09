@@ -60,6 +60,20 @@ export class PluginController {
     LogController.log("PluginController initialized.");
 
     await PythonInterop.setActiveSteamId(getCurrentUserId());
+
+    const networkName = await PythonInterop.getNetworkName();
+    if (typeof networkName !== "string") {
+      // TODO: handle error
+    } else {
+      this.pluginState.setNetworkName(networkName);
+    }
+
+    const networkPassword = await PythonInterop.getNetworkPassword();
+    if (typeof networkPassword !== "string") {
+      // TODO: handle error
+    } else {
+      this.pluginState.setNetworkPassword(networkPassword);
+    }
     
     this.onWakeSub = this.steamController.registerForOnResumeFromSuspend(this.onWakeFromSleep.bind(this));
     // TODO: other subs here

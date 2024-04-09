@@ -43,6 +43,7 @@ export class PythonInterop {
     await this.serverAPI.callPluginMethod<{ message: string, level: number }, boolean>("logMessage", { message: `[front-end]: ${message}`, level: 2 });
   }
   
+  
   /**
    * Gets the plugin's users dictionary.
    * @returns A promise resolving to the plugin's users dictionary.
@@ -107,7 +108,7 @@ export class PythonInterop {
    * @returns A promise resolving to whether or not the network name was successfully set.
    */
   static async setNetworkName(networkName: string): Promise<void | Error> {
-    let result = await PythonInterop.serverAPI.callPluginMethod<{ network_name: string, }, void>("set_network_name", { network_name: networkName });
+    let result = await PythonInterop.serverAPI.callPluginMethod<{ net_name: string, }, void>("set_network_name", { net_name: networkName });
 
     if (result.success) {
       return result.result;
@@ -122,7 +123,7 @@ export class PythonInterop {
    * @returns A promise resolving to whether or not the network password was successfully set.
    */
   static async setNetworkPassword(networkPassword: string): Promise<void | Error> {
-    let result = await PythonInterop.serverAPI.callPluginMethod<{ network_password: string, }, void>("set_network_password", { network_password: networkPassword });
+    let result = await PythonInterop.serverAPI.callPluginMethod<{ net_password: string, }, void>("set_network_password", { net_password: networkPassword });
 
     if (result.success) {
       return result.result;

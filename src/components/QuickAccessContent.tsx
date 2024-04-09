@@ -1,31 +1,22 @@
-import { VFC, useEffect, Fragment } from "react";
+import { VFC  } from "react";
 import { LogController } from "../lib/controllers/LogController";
 
-import { FaCircleExclamation } from "react-icons/fa6";
+import { FaBan, FaCircleExclamation, FaPlay } from "react-icons/fa6";
 import { QamStyles } from "./styles/QamStyles";
 import { usePluginState } from "../state/PluginContext";
-import { ButtonItem, Focusable, PanelSection, TextField } from "decky-frontend-lib";
-import { PythonInterop } from "../lib/controllers/PythonInterop";
+import { DialogButton, Field, Focusable, PanelSection } from "decky-frontend-lib";
+import { showNetworkSettingsModal } from "./modals/NetworkSettingsModal";
+import { PluginState } from "../state/PluginState";
 
 /**
  * The Quick Access Menu content for the Plugin.
  */
-export const QuickAccessContent: VFC<{}> = ({ }) => {
+export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginState }) => {
   // * Load your state
-  const { isNetworkRunning, networkName, setNetworkName, networkPassword, setNetworkPassword, connectedDevices } = usePluginState();
+  const { isNetworkRunning, connectedDevices } = usePluginState();
 
-  useEffect(() => {
-    // TODO: handle any onMount tasks
-  }, []);
+  function handleButtonClick() {
 
-  // TODO: define any function this component will use
-
-  function onNetworkNameChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    const name = e.target?.value;
-  }
-
-  function onNetworkPasswordChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    const password = e.target?.value;
   }
 
   return (
@@ -53,19 +44,28 @@ export const QuickAccessContent: VFC<{}> = ({ }) => {
         {/* TODO: isRunning indicator */}
         {/* TODO: styling will need work  */}
 
-        <PanelSection title="Network Settings">
-          {isNetworkRunning ? (
-            // TODO: style this as needed
-            <div>Can't edit the network while its running</div>
-          ) : (
-            // TODO: style this as needed
-            <>
-              <TextField label="Name" placeholder="Enter a name" onChange={onNetworkNameChange} value={networkName} />
-              {/* TODO: make this field a password field */}
-              <TextField label="Password" placeholder="Enter a password" onChange={onNetworkPasswordChange} value={networkPassword} />
-            </>
-          )}
-        </PanelSection>
+        <Field className="no-sep">
+          <Focusable style={{ width: "100%", display: "flex" }}>
+            <Focusable className="configure-btn" style={{ width: "calc(100% - 50px)" }}>
+              <DialogButton disabled={isNetworkRunning} onClick={() => showNetworkSettingsModal(pluginState)} onOKActionDescription={'Configure'}>
+                Configure
+              </DialogButton>
+            </Focusable>
+            <Focusable className="configure-btn" style={{ marginLeft: "10px" }}>
+              <DialogButton
+                style={{ height: '40px', width: '42px', minWidth: 0, padding: '10px 12px', marginLeft: 'auto', display: "flex", justifyContent: "center", alignItems: "center", marginRight: "8px" }}
+                onOKActionDescription={isNetworkRunning ? 'Kill Network' : 'Start Network'}
+                onClick={handleButtonClick}
+              >
+                {isNetworkRunning ? (
+                  <FaBan size='1.4em' color="#ef5959" />
+                ) : (
+                  <FaPlay size='1.4em' color="lime" />
+                )}
+              </DialogButton>
+              </Focusable>
+          </Focusable>
+        </Field>
 
         <PanelSection>
           {/* TODO: run/kill button here */}

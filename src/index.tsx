@@ -11,7 +11,6 @@ import { PythonInterop } from "./lib/controllers/PythonInterop";
 import { PluginContextProvider } from "./state/PluginContext";
 import { PluginState } from "./state/PluginState";
 import { QuickAccessContent } from "./components/QuickAccessContent";
-import { PluginRouterDemo } from "./components/PluginRouter";
 
 declare global {
   var SteamClient: SteamClient;
@@ -22,19 +21,9 @@ declare global {
 }
 
 export default definePlugin((serverAPI: ServerAPI) => {
-  // TODO: define any route patches here
-  // ex: let libraryPatch: RoutePatch;
-
   PythonInterop.setServer(serverAPI);
   const pluginState = new PluginState()
   PluginController.setup(serverAPI, pluginState);
-
-  // TODO: define any custom routes here
-  serverAPI.routerHook.addRoute("/quick-start-router", () => (
-    <PluginContextProvider PluginStateClass={pluginState}>
-      <PluginRouterDemo />
-    </PluginContextProvider>
-  ));
 
   const loginUnregisterer = PluginController.initOnLogin(async () => {
     // TODO: initialize any state reloaded values here
@@ -45,21 +34,15 @@ export default definePlugin((serverAPI: ServerAPI) => {
   });
 
   return {
-    title: <div className={staticClasses.Title}>QuickStart</div>,
+    title: <div className={staticClasses.Title}>AdHoc Hoster</div>,
     content:
-      <PluginContextProvider PluginStateClass={pluginState}>
-        <QuickAccessContent />
+      <PluginContextProvider pluginState={pluginState}>
+        <QuickAccessContent pluginState={pluginState} />
       </PluginContextProvider>,
     icon: <LuPartyPopper />,
     onDismount: () => {
-      // TODO: unregister any route patches here.
-
-      // TODO: remove any custom routes here
-      serverAPI.routerHook.removeRoute("/quick-start-router");
-
       loginUnregisterer.unregister();
       PluginController.dismount();
     },
   };
 });
-

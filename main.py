@@ -146,7 +146,7 @@ class Plugin:
     """
 
     Plugin.network_password = net_password
-    Plugin.users_dict[Plugin.user_id]["networkName"] = obfuscate(net_password)
+    Plugin.users_dict[Plugin.user_id]["networkPassword"] = obfuscate(net_password)
     await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
 
 
