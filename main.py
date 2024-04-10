@@ -76,13 +76,20 @@ class Plugin:
 
   def connection_exists() -> bool:
     result = subprocess.run([f"sudo nmcli connection show \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
-    
-    # TODO: figure out how to tell if the connection exists
 
-    return False
+    return not "no connection" in result.stdout
   
   def create_adhoc_hoster_connection() -> bool:
-    result = subprocess.run([f"sudo nmcli connection add type wifi con-name \"{Plugin.network_name}\" wifi.password \"{Plugin.network_password}\" wifi.mode adhoc"], timeout=10, shell=True, capture_output=True, text=True)
+    # TODO: if ip address needed, add
+    # ipv4.method manual ipv4.address DECK_IP_v4/24 ipv4.dns 8.8.8.8 ipv6.method ignore
+    # ? or
+    # ipv4.method manual ipv4.address DECK_IP_v4/24 ipv6.method ignore
+    # ? or
+    # ipv4.method shared ipv6.method ignore
+
+    # may need wifi.band a
+
+    result = subprocess.run([f"sudo nmcli connection add type wifi ifname wlan0 ssid \"{Plugin.network_name}\" password \"{Plugin.network_password}\" wifi.type Home wifi.mode adhoc connection.autoconnect no"], timeout=10, shell=True, capture_output=True, text=True)
 
     # TODO: figure out if the command succeeded
 
@@ -203,35 +210,53 @@ class Plugin:
 
     return True
 
-  async def set_network_name(self, net_name: str):
+  async def set_network_name(self, net_name: str) -> bool:
     """
     Sets the user's network name
 
     @param net_name (str): The user's network name
     """
 
-    result = subprocess.run([f"sudo nmcli connection modify \"{Plugin.network_name}\" con-name \"{net_name}\""], timeout=10, shell=True, capture_output=True, text=True)
+    result = None
+    should_skip = False
+
+    if Plugin.connection_exists():
+      result = subprocess.run([f"sudo nmcli connection modify \"{Plugin.network_name}\" con-name \"{net_name}\""], timeout=10, shell=True, capture_output=True, text=True)
+    else:
+      should_skip = True
     
-    # TODO: check to make sure the process succeeded
+    if should_skip or result.returncode == 0:
+      Plugin.network_name = net_name
+      Plugin.users_dict[Plugin.user_id]["networkName"] = net_name
+      await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
+      return True
+    else:
+      error("Failed to update connection name!")
+      return False
 
-    Plugin.network_name = net_name
-    Plugin.users_dict[Plugin.user_id]["networkName"] = net_name
-    await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
-
-  async def set_network_password(self, net_password: str):
+  async def set_network_password(self, net_password: str) -> bool:
     """
     Sets the user's network password
 
     @param net_password (str): The user's network password
     """
 
-    result = subprocess.run([f"sudo nmcli connection modify \"{Plugin.network_name}\" password \"{net_password}\""], timeout=10, shell=True, capture_output=True, text=True)
-    
-    # TODO: check to make sure the process succeeded
+    result = None
+    should_skip = False
 
-    Plugin.network_password = net_password
-    Plugin.users_dict[Plugin.user_id]["networkPassword"] = obfuscate(net_password)
-    await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
+    if Plugin.connection_exists():
+      result = subprocess.run([f"sudo nmcli connection modify \"{Plugin.network_name}\" password \"{net_password}\""], timeout=10, shell=True, capture_output=True, text=True)
+    else:
+      should_skip = True
+    
+    if should_skip or result.returncode == 0:
+      Plugin.network_password = net_password
+      Plugin.users_dict[Plugin.user_id]["networkPassword"] = obfuscate(net_password)
+      await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
+      return True
+    else:
+      error("Failed to update connection password!")
+      return False
 
 
   async def read(self) -> None:

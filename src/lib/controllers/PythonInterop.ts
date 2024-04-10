@@ -107,8 +107,8 @@ export class PythonInterop {
    * @param networkName The user's network name.
    * @returns A promise resolving to whether or not the network name was successfully set.
    */
-  static async setNetworkName(networkName: string): Promise<void | Error> {
-    let result = await PythonInterop.serverAPI.callPluginMethod<{ net_name: string, }, void>("set_network_name", { net_name: networkName });
+  static async setNetworkName(networkName: string): Promise<boolean | Error> {
+    let result = await PythonInterop.serverAPI.callPluginMethod<{ net_name: string, }, boolean>("set_network_name", { net_name: networkName });
 
     if (result.success) {
       return result.result;
@@ -122,8 +122,8 @@ export class PythonInterop {
    * @param networkPassword The user's network password.
    * @returns A promise resolving to whether or not the network password was successfully set.
    */
-  static async setNetworkPassword(networkPassword: string): Promise<void | Error> {
-    let result = await PythonInterop.serverAPI.callPluginMethod<{ net_password: string, }, void>("set_network_password", { net_password: networkPassword });
+  static async setNetworkPassword(networkPassword: string): Promise<boolean | Error> {
+    let result = await PythonInterop.serverAPI.callPluginMethod<{ net_password: string, }, boolean>("set_network_password", { net_password: networkPassword });
 
     if (result.success) {
       return result.result;

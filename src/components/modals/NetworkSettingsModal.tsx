@@ -60,15 +60,28 @@ const NetworkSettingsModal: VFC<NetworkSettingsModalProps> = ({ closeModal }) =>
 
   async function onSave() {
     if (canSave) {
-      setNetworkName(localName);
-      await PythonInterop.setNetworkName(localName);
+      let shouldSave = true;
+      
+      const nameSucceeded = await PythonInterop.setNetworkName(localName);
+      if (nameSucceeded) {
+        setNetworkName(localName);
+      } else {
+        PythonInterop.toast("Error", "Failed to set network name!");
+        shouldSave = false;
+      }
 
-      setNetworkPassword(localPassword);
-      await PythonInterop.setNetworkPassword(localPassword);
+      const passwordSucceeded = await PythonInterop.setNetworkPassword(localPassword);
+      if (passwordSucceeded) {
+        setNetworkPassword(localPassword);
+      } else {
+        PythonInterop.toast("Error", "Failed to set network password!");
+        shouldSave = false;
+      }
 
-      LogController.log("Saved Network Settings.");
-
-      closeModal!();
+      if (shouldSave) {
+        LogController.log("Saved Network Settings.");
+        closeModal!();
+      }
     } else {
       PythonInterop.toast("Can't Save Settings", "Please check that the name and password are long enough");
     }
