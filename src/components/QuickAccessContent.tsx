@@ -7,16 +7,36 @@ import { usePluginState } from "../state/PluginContext";
 import { DialogButton, Field, Focusable, PanelSection } from "decky-frontend-lib";
 import { showNetworkSettingsModal } from "./modals/NetworkSettingsModal";
 import { PluginState } from "../state/PluginState";
+import { PythonInterop } from "../lib/controllers/PythonInterop";
 
 /**
  * The Quick Access Menu content for the Plugin.
  */
 export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginState }) => {
-  // * Load your state
-  const { isNetworkRunning, connectedDevices } = usePluginState();
+  const { isNetworkRunning, setIsNetworkRunning, connectedDevices } = usePluginState();
 
-  function handleButtonClick() {
+  async function handleButtonClick() {
+    if (isNetworkRunning) {
+      const success = await PythonInterop.killNetwork();
 
+      if (success) {
+        LogController.log("Killed the adHoc network.");
+        setIsNetworkRunning(!isNetworkRunning);
+      } else {
+        LogController.error("Failed to kill the adhoc network.");
+        PythonInterop.toast("Error", "Failed to kill the adhoc network");
+      }
+    } else {
+      const success = await PythonInterop.startNetwork();
+
+      if (success) {
+        LogController.log("Started the adHoc network.");
+        setIsNetworkRunning(!isNetworkRunning);
+      } else {
+        LogController.error("Failed to start the adhoc network.");
+        PythonInterop.toast("Error", "Failed to start the adhoc network");
+      }
+    }
   }
 
   return (

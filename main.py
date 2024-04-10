@@ -28,10 +28,6 @@ def deobfuscate(obfuscated: str) -> str:
   return codecs.decode(obfuscated, "rot13")
 
 
-def run_bash_command(command: list[str]) -> str | None:
-  return subprocess.run(command, capture_output=True, text=True).stdout
-
-
 class Plugin:
   network_updates: list[str] = [] # * Will function like a stack
   should_monitor: bool = False
@@ -64,7 +60,7 @@ class Plugin:
       if Plugin.should_monitor:
         # * start monitoring if needed
         if monitored_process is None:
-          monitored_process = subprocess.Popen(["nmcli connection monitor", Plugin.network_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="text")
+          monitored_process = subprocess.Popen(["nmcli", "connection", "monitor", Plugin.network_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
           log(f"Started monitoring {Plugin.network_name}")
         else:
           try:
@@ -94,34 +90,26 @@ class Plugin:
 
   async def start_network(self) -> bool:
     success = False
-    result = "placeholder"
+    result = subprocess.run([f"sudo nmcli dev wifi hotspot con-name \"{Plugin.network_name}\" password \"{Plugin.network_password}\""], timeout=10, shell=True, capture_output=True, text=True)
     
-    # * check if the network already exits:
-    connection_status = run_bash_command([f"sudo nmcli -f connection.id connection status \"{Plugin.network_name}\""])
-    network_exists = Plugin.network_name in connection_status
+    log(result.stdout)
 
-    if network_exists:
-      # result = run_bash_command([f"sudo nmcli connection up \"{Plugin.network_name}\" ifname wlan0"])
-      result = run_bash_command([f"sudo nmcli connection up \"{Plugin.network_name}\""])
-    else:
-      # result = run_bash_command([f"sudo nmcli dev wifi hotspot ifname wlan0 ssid \"{Plugin.network_name}\" password \"{Plugin.network_password}\""])
-      result = run_bash_command([f"sudo nmcli dev wifi con \"{Plugin.network_name}\" password \"{Plugin.network_password}\""])
-    
-    log(result)
-
-    if result != "placeholder" and "successfully activated" in result:
+    if result.returncode == 0:
       success = True
       Plugin.should_monitor = True
 
     return success
   
   async def kill_network(self) -> bool:
-    result = run_bash_command([f"sudo nmcli connection down \"{Plugin.network_name}\""])
-    Plugin.should_monitor = False
+    success = False
+    result_off = subprocess.run([f"sudo nmcli r wifi off"], timeout=10, shell=True, capture_output=True, text=True)
+    result_on = subprocess.run([f"sudo nmcli r wifi on"], timeout=10, shell=True, capture_output=True, text=True)
+
+    if result_off.returncode == 0 and result_on.returncode == 0:
+      success = True
+      Plugin.should_monitor = False
     
-    log(result)
-    
-    return "successfully deactivated" in result
+    return success
 
 
   # * Plugin settings getters
