@@ -73,6 +73,7 @@ class Plugin:
       else:
         monitored_process = None
         Plugin.network_updates = []
+        log(f"Stopped monitoring {Plugin.network_name}")
 
 
   async def get_next_network_update(self) -> str:
