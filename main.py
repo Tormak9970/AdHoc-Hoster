@@ -27,7 +27,6 @@ def obfuscate(value: str) -> str:
 def deobfuscate(obfuscated: str) -> str:
   return codecs.decode(obfuscated, "rot13")
 
-
 class Plugin:
   network_updates: list[str] = [] # * Will function like a stack
   should_monitor: bool = False
@@ -75,6 +74,20 @@ class Plugin:
         Plugin.network_updates = []
         log(f"Stopped monitoring {Plugin.network_name}")
 
+  def connection_exists() -> bool:
+    result = subprocess.run([f"sudo nmcli connection show \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
+    
+    # TODO: figure out how to tell if the connection exists
+
+    return False
+  
+  def create_adhoc_hoster_connection() -> bool:
+    result = subprocess.run([f"sudo nmcli connection add type wifi con-name \"{Plugin.network_name}\" wifi.password \"{Plugin.network_password}\" wifi.mode adhoc"], timeout=10, shell=True, capture_output=True, text=True)
+
+    # TODO: figure out if the command succeeded
+
+    return False
+
 
   async def get_next_network_update(self) -> str:
     """
@@ -91,7 +104,12 @@ class Plugin:
 
   async def start_network(self) -> bool:
     success = False
-    result = subprocess.run([f"sudo nmcli dev wifi hotspot con-name \"{Plugin.network_name}\" password \"{Plugin.network_password}\""], timeout=10, shell=True, capture_output=True, text=True)
+    # result = subprocess.run([f"sudo nmcli dev wifi hotspot con-name \"{Plugin.network_name}\" password \"{Plugin.network_password}\""], timeout=10, shell=True, capture_output=True, text=True)
+    
+    if not Plugin.connection_exists():
+      Plugin.create_adhoc_hoster_connection()
+    
+    result = subprocess.run([f"sudo nmcli connection up \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     
     log(result.stdout)
 
@@ -103,13 +121,21 @@ class Plugin:
   
   async def kill_network(self) -> bool:
     success = False
-    result_off = subprocess.run([f"sudo nmcli r wifi off"], timeout=10, shell=True, capture_output=True, text=True)
-    result_on = subprocess.run([f"sudo nmcli r wifi on"], timeout=10, shell=True, capture_output=True, text=True)
+    # result_off = subprocess.run([f"sudo nmcli r wifi off"], timeout=10, shell=True, capture_output=True, text=True)
+    # result_on = subprocess.run([f"sudo nmcli r wifi on"], timeout=10, shell=True, capture_output=True, text=True)
 
-    if result_off.returncode == 0 and result_on.returncode == 0:
+    # if result_off.returncode == 0 and result_on.returncode == 0:
+    #   success = True
+    #   Plugin.should_monitor = False
+    
+    result = subprocess.run([f"sudo nmcli connection down \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
+    
+    log(result.stdout)
+
+    if result.returncode == 0:
       success = True
       Plugin.should_monitor = False
-    
+
     return success
 
 
@@ -184,6 +210,10 @@ class Plugin:
     @param net_name (str): The user's network name
     """
 
+    result = subprocess.run([f"sudo nmcli connection modify \"{Plugin.network_name}\" con-name \"{net_name}\""], timeout=10, shell=True, capture_output=True, text=True)
+    
+    # TODO: check to make sure the process succeeded
+
     Plugin.network_name = net_name
     Plugin.users_dict[Plugin.user_id]["networkName"] = net_name
     await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
@@ -194,6 +224,10 @@ class Plugin:
 
     @param net_password (str): The user's network password
     """
+
+    result = subprocess.run([f"sudo nmcli connection modify \"{Plugin.network_name}\" password \"{net_password}\""], timeout=10, shell=True, capture_output=True, text=True)
+    
+    # TODO: check to make sure the process succeeded
 
     Plugin.network_password = net_password
     Plugin.users_dict[Plugin.user_id]["networkPassword"] = obfuscate(net_password)
@@ -251,7 +285,7 @@ class Plugin:
     Plugin.settings = SettingsManager(name="settings", settings_directory=os.environ["DECKY_PLUGIN_SETTINGS_DIR"])
     await Plugin.read(self)
 
-    log("Initializing AdHoc Hoster.")
+    log("Initialized AdHoc Hoster.")
 
     await Plugin.monitor_network_updates(self)
 
