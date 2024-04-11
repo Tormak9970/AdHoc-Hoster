@@ -63,6 +63,18 @@ export const QamStyles: VFC<{}> = ({}) => {
       .adhoc-hoster-scope .no-sep .${(gamepadDialogClasses as any).FieldChildrenWithIcon} {
         width: calc(100% - 10px);
       }
+
+      @keyframes adhoc-hoster-loading {
+        0% {
+          background-color: #ffbd04;
+        }
+        50% {
+          background-color: #fff704;
+        }
+        100% {
+          background-color: #ffbd04;
+        }
+      }
     `}</style>
   );
 }

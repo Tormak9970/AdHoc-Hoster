@@ -48,6 +48,11 @@ class Plugin:
     elif level == 2:
       error(message)
 
+  
+  def check_for_dnsmasq(self):
+    result = subprocess.run([f"sudo pacman -Q dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
+    return "error" not in result.stdout
+
 
   async def monitor_network_updates(self):
     wait_time = 0.5 # TODO: find a good time balance

@@ -1,10 +1,10 @@
-import { VFC  } from "react";
+import { useState, VFC  } from "react";
 import { LogController } from "../lib/controllers/LogController";
 
 import { FaBan, FaCircleExclamation, FaPlay } from "react-icons/fa6";
 import { QamStyles } from "./styles/QamStyles";
 import { usePluginState } from "../state/PluginContext";
-import { DialogButton, Field, Focusable, PanelSection } from "decky-frontend-lib";
+import { DialogButton, Field, Focusable, PanelSection, SteamSpinner } from "decky-frontend-lib";
 import { showNetworkSettingsModal } from "./modals/NetworkSettingsModal";
 import { PluginState } from "../state/PluginState";
 import { PythonInterop } from "../lib/controllers/PythonInterop";
@@ -13,29 +13,33 @@ import { PythonInterop } from "../lib/controllers/PythonInterop";
  * The Quick Access Menu content for the Plugin.
  */
 export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginState }) => {
+  const [isLoading, setIsLoading] = useState(false);
   const { isNetworkRunning, setIsNetworkRunning, connectedDevices } = usePluginState();
 
   async function handleButtonClick() {
+    setIsLoading(true);
     if (isNetworkRunning) {
-      const success = await PythonInterop.killNetwork();
-
-      if (success) {
-        LogController.log("Killed the adHoc network.");
-        setIsNetworkRunning(!isNetworkRunning);
-      } else {
-        LogController.error("Failed to kill the adhoc network.");
-        PythonInterop.toast("Error", "Failed to kill the adhoc network");
-      }
+      PythonInterop.killNetwork().then((success) => {
+        if (success) {
+          LogController.log("Killed the adHoc network.");
+          setIsNetworkRunning(!isNetworkRunning);
+          setIsLoading(false);
+        } else {
+          LogController.error("Failed to kill the adhoc network.");
+          PythonInterop.toast("Error", "Failed to kill the adhoc network");
+        }
+      });
     } else {
-      const success = await PythonInterop.startNetwork();
-
-      if (success) {
-        LogController.log("Started the adHoc network.");
-        setIsNetworkRunning(!isNetworkRunning);
-      } else {
-        LogController.error("Failed to start the adhoc network.");
-        PythonInterop.toast("Error", "Failed to start the adhoc network");
-      }
+      PythonInterop.startNetwork().then((success) => {
+        if (success) {
+          LogController.log("Started the adHoc network.");
+          setIsNetworkRunning(!isNetworkRunning);
+          setIsLoading(false);
+        } else {
+          LogController.error("Failed to start the adhoc network.");
+          PythonInterop.toast("Error", "Failed to start the adhoc network");
+        }
+      });
     }
   }
 
@@ -77,11 +81,15 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
                 onOKActionDescription={isNetworkRunning ? 'Kill Network' : 'Start Network'}
                 onClick={handleButtonClick}
               >
-                {isNetworkRunning ? (
-                  <FaBan size='1.4em' color="#ef5959" />
-                ) : (
-                  <FaPlay size='1.4em' color="lime" />
-                )}
+                {isLoading && <div style={{
+                  "width": "1.1em",
+                  "height": "1.1em",
+                  "borderRadius": "50%",
+                  "backgroundColor": "#ffbd04",
+                  "animation": "adhoc-hoster-loading 3s ease-in-out infinite"
+                }} />}
+                {!isLoading && isNetworkRunning && <FaBan size='1.4em' color="#ef5959" />}
+                {!isLoading && !isNetworkRunning && <FaPlay size='1.4em' color="lime" />}
               </DialogButton>
               </Focusable>
           </Focusable>

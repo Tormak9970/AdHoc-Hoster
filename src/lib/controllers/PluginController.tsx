@@ -77,6 +77,21 @@ export class PluginController {
     
     this.onWakeSub = this.steamController.registerForOnResumeFromSuspend(this.onWakeFromSleep.bind(this));
     // TODO: other subs here
+
+    PluginController.listenForNetworkUpdates();
+  }
+
+  /**
+   * Recursively listen for network updates.
+   */
+  private static async listenForNetworkUpdates(): Promise<void> {
+    PythonInterop.getNextNetworkUpdate().then((update: string | Error) => {
+      LogController.log(update);
+      
+      // TODO: parse update and set connected devices.
+
+      PluginController.listenForNetworkUpdates();
+    });
   }
 
   static async onShutdown() {
