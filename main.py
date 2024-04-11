@@ -69,31 +69,20 @@ class Plugin:
               log(f"Recieved network update {update}")
           except subprocess.TimeoutExpired:
             continue
-      else:
+      elif monitored_process is not None:
         monitored_process = None
         Plugin.network_updates = []
         log(f"Stopped monitoring {Plugin.network_name}")
 
   def connection_exists() -> bool:
-    result = subprocess.run([f"sudo nmcli connection show \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
-
-    return not "no connection" in result.stdout
+    result = subprocess.run([f"sudo nmcli -f connection.id connection show \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
+    return not "Error" in result.stdout
   
   def create_adhoc_hoster_connection() -> bool:
-    # TODO: if ip address needed, add
-    # ipv4.method manual ipv4.address DECK_IP_v4/24 ipv4.dns 8.8.8.8 ipv6.method ignore
-    # ? or
-    # ipv4.method manual ipv4.address DECK_IP_v4/24 ipv6.method ignore
-    # ? or
-    # ipv4.method shared ipv6.method ignore
+    # sudo nmcli connection add type wifi ifname wlan0 ssid "Tormak's Steamdeck" con-name "Tormak's Steamdeck" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "test1234" wifi.mode adhoc connection.autoconnect no ipv4.method shared ipv6.method ignore
+    result = subprocess.run([f"sudo nmcli connection add type wifi ifname wlan0 ssid \"{Plugin.network_name}\" con-name \"{Plugin.network_name}\" wifi-sec.key-mgmt wpa-psk wifi-sec.psk \"{Plugin.network_password}\" wifi.mode adhoc connection.autoconnect no ipv4.method shared ipv6.method ignore"], timeout=10, shell=True, capture_output=True, text=True)
 
-    # may need wifi.band a
-
-    result = subprocess.run([f"sudo nmcli connection add type wifi ifname wlan0 ssid \"{Plugin.network_name}\" password \"{Plugin.network_password}\" wifi.type Home wifi.mode adhoc connection.autoconnect no"], timeout=10, shell=True, capture_output=True, text=True)
-
-    # TODO: figure out if the command succeeded
-
-    return False
+    return "successfully added" in result.stdout
 
 
   async def get_next_network_update(self) -> str:
@@ -111,16 +100,22 @@ class Plugin:
 
   async def start_network(self) -> bool:
     success = False
-    # result = subprocess.run([f"sudo nmcli dev wifi hotspot con-name \"{Plugin.network_name}\" password \"{Plugin.network_password}\""], timeout=10, shell=True, capture_output=True, text=True)
     
     if not Plugin.connection_exists():
       Plugin.create_adhoc_hoster_connection()
     
-    result = subprocess.run([f"sudo nmcli connection up \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
+    down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
+    
+    log(down_result.stdout)
+    log(down_result.stderr)
+
+
+    result = subprocess.run([f"sudo nmcli connection up \"{Plugin.network_name}\" ifname wlan0"], timeout=10, shell=True, capture_output=True, text=True)
     
     log(result.stdout)
+    log(result.stderr)
 
-    if result.returncode == 0:
+    if down_result.returncode == 0 and result.returncode == 0:
       success = True
       Plugin.should_monitor = True
 
@@ -128,13 +123,6 @@ class Plugin:
   
   async def kill_network(self) -> bool:
     success = False
-    # result_off = subprocess.run([f"sudo nmcli r wifi off"], timeout=10, shell=True, capture_output=True, text=True)
-    # result_on = subprocess.run([f"sudo nmcli r wifi on"], timeout=10, shell=True, capture_output=True, text=True)
-
-    # if result_off.returncode == 0 and result_on.returncode == 0:
-    #   success = True
-    #   Plugin.should_monitor = False
-    
     result = subprocess.run([f"sudo nmcli connection down \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     
     log(result.stdout)
@@ -245,7 +233,7 @@ class Plugin:
     should_skip = False
 
     if Plugin.connection_exists():
-      result = subprocess.run([f"sudo nmcli connection modify \"{Plugin.network_name}\" password \"{net_password}\""], timeout=10, shell=True, capture_output=True, text=True)
+      result = subprocess.run([f"sudo nmcli connection modify \"{Plugin.network_name}\" wifi-sec.psk \"{net_password}\""], timeout=10, shell=True, capture_output=True, text=True)
     else:
       should_skip = True
     
