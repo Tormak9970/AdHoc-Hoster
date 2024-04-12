@@ -14,12 +14,6 @@ T = TypeVar("T")
 def log(txt):
   decky_plugin.logger.info(txt)
 
-def warn(txt):
-  decky_plugin.logger.warn(txt)
-
-def error(txt):
-  decky_plugin.logger.error(txt)
-
 
 def obfuscate(value: str) -> str:
   return codecs.encode(value, "rot13")
@@ -44,9 +38,9 @@ class Plugin:
     if level == 0:
       log(message)
     elif level == 1:
-      warn(message)
+      decky_plugin.logger.warn(message)
     elif level == 2:
-      error(message)
+      decky_plugin.logger.error(message)
 
   
   def check_for_dnsmasq(self):
@@ -109,18 +103,19 @@ class Plugin:
     if not Plugin.connection_exists():
       Plugin.create_adhoc_hoster_connection()
     
-    down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
+    # down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
     
-    log(down_result.stdout)
-    log(down_result.stderr)
+    # log(down_result.stdout)
+    # log(down_result.stderr)
 
-
+    # sudo hostapd /path/to/hoster-hostapd.conf
     result = subprocess.run([f"sudo nmcli connection up \"{Plugin.network_name}\" ifname wlan0"], timeout=10, shell=True, capture_output=True, text=True)
     
     log(result.stdout)
     log(result.stderr)
 
-    if down_result.returncode == 0 and result.returncode == 0:
+    # down_result.returncode == 0 and 
+    if result.returncode == 0:
       success = True
       Plugin.should_monitor = True
 
@@ -224,7 +219,8 @@ class Plugin:
       await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
       return True
     else:
-      error("Failed to update connection name!")
+      
+      Plugin.logMessage(self, "Failed to update connection name!", 2)
       return False
 
   async def set_network_password(self, net_password: str) -> bool:
@@ -248,7 +244,7 @@ class Plugin:
       await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
       return True
     else:
-      error("Failed to update connection password!")
+      Plugin.logMessage(self, "Failed to update connection password!", 2)
       return False
 
 
