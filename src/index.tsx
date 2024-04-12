@@ -4,7 +4,7 @@ import {
   staticClasses,
 } from "decky-frontend-lib";
 
-import { LuPartyPopper } from "react-icons/lu";
+import { LuNetwork } from "react-icons/lu";
 
 import { PluginController } from "./lib/controllers/PluginController";
 import { PythonInterop } from "./lib/controllers/PythonInterop";
@@ -16,7 +16,7 @@ declare global {
   var SteamClient: SteamClient;
   let collectionStore: CollectionStore;
   let loginStore: LoginStore;
-  //* This casing is correct, idk why it doesn't match the others.
+  // * This casing is correct, idk why it doesn't match the others.
   let securitystore: SecurityStore;
 }
 
@@ -26,9 +26,6 @@ export default definePlugin((serverAPI: ServerAPI) => {
   PluginController.setup(serverAPI, pluginState);
 
   const loginUnregisterer = PluginController.initOnLogin(async () => {
-    // TODO: initialize any state reloaded values here
-    // const demo = await PythonInterop.getDemo();
-
     // TODO: perform the actual route patching here
     // ex: libraryPatch = patchLibrary(serverAPI);
   });
@@ -39,7 +36,7 @@ export default definePlugin((serverAPI: ServerAPI) => {
       <PluginContextProvider pluginState={pluginState}>
         <QuickAccessContent pluginState={pluginState} />
       </PluginContextProvider>,
-    icon: <LuPartyPopper />,
+    icon: <LuNetwork />,
     onDismount: () => {
       loginUnregisterer.unregister();
       PluginController.dismount();

@@ -109,10 +109,29 @@ jobs:
               });
             }
 
+            function copyDirRecursive(parentPath, contents, dest) {
+              for (const file of contents) {
+                const fileName = file.name;
+                const srcPath = path.join(cwdPath, parentPath, fileName);
+                const destPath = path.join(cwdPath, dest, fileName);
+
+                if (fs.lstatSync(srcPath).isDirectory()) {
+                  const dirContents = fs.readdirSync(srcPath, { withFileTypes: true });
+                  const dirDestPath = path.join(dest, fileName);
+                  fs.mkdirSync(dirDestPath, { recursive: true });
+                  copyDirRecursive(path.join(parentPath, fileName), dirContents, dirDestPath);
+                } else {
+                  fs.copyFileSync(srcPath, destPath);
+                }
+              }
+            }
+
             const cwdPath = path.resolve(process.cwd());
+
 
             // * build the plugin with `pnpm build`
             child_process.execSync("pnpm build");
+
 
             // * once finished, make folder with all files in includeInBuild
             const bundleWrapperPath = path.join(cwdPath, "bundle");
@@ -127,12 +146,23 @@ jobs:
               fs.copyFileSync(srcPath, destPath);
             }
 
+
+            // * check contents of defaults
+            const defaultsPath = path.join(cwdPath, "defaults");
+            
+            if (fs.existsSync(defaultsPath)) {
+              const defaultContents = fs.readdirSync(defaultsPath, { withFileTypes: true });
+              copyDirRecursive("defaults", defaultContents, `bundle${path.sep}AdHoc-Hoster`);
+            }
+
+
             // * zip
             child_process.execSync("pnpm i zip-a-folder");
             const { zip, COMPRESSION_LEVEL } = require('zip-a-folder');
 
             const outputZipPath = path.join(cwdPath, "bundle.zip");
             await zip(bundleWrapperPath, outputZipPath, {compression: COMPRESSION_LEVEL.high});
+
 
             // * upload to release
             await uploadReleaseAsset(`AdHoc-Hoster_${process.env.release_tag}.zip`, fs.readFileSync(outputZipPath));
