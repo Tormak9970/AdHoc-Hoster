@@ -103,11 +103,17 @@ class Plugin:
     if not Plugin.connection_exists():
       Plugin.create_adhoc_hoster_connection()
 
+    # down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
+    
+    # log(down_result.stdout)
+    # log(down_result.stderr)
+
     result = subprocess.run([f"sudo nmcli connection up \"{Plugin.network_name}\" ifname wlan0"], timeout=10, shell=True, capture_output=True, text=True)
     
     log(result.stdout)
     log(result.stderr)
 
+    # down_result.returncode == 0 and
     if result.returncode == 0:
       success = True
       Plugin.should_monitor = True
