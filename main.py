@@ -78,8 +78,7 @@ class Plugin:
     return not "Error" in result.stdout
   
   def create_adhoc_hoster_connection() -> bool:
-    # sudo nmcli connection add type wifi ifname wlan0 ssid "Tormak's Steamdeck" con-name "Tormak's Steamdeck" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "test1234" wifi.mode adhoc connection.autoconnect no ipv4.method shared ipv6.method ignore
-    result = subprocess.run([f"sudo nmcli connection add type wifi ifname wlan0 ssid \"{Plugin.network_name}\" con-name \"{Plugin.network_name}\" wifi-sec.key-mgmt wpa-psk wifi-sec.psk \"{Plugin.network_password}\" wifi.mode adhoc connection.autoconnect no ipv4.method shared ipv6.method ignore"], timeout=10, shell=True, capture_output=True, text=True)
+    result = subprocess.run([f"sudo nmcli connection add type wifi ifname wlan0 ssid \"{Plugin.network_name}\" con-name \"{Plugin.network_name}\" wifi-sec.key-mgmt wpa-psk wifi-sec.psk \"{Plugin.network_password}\" wifi.mode ap connection.autoconnect no ipv4.method shared ipv6.method ignore"], timeout=10, shell=True, capture_output=True, text=True)
 
     return "successfully added" in result.stdout
 
@@ -102,19 +101,12 @@ class Plugin:
     
     if not Plugin.connection_exists():
       Plugin.create_adhoc_hoster_connection()
-    
-    # down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
-    
-    # log(down_result.stdout)
-    # log(down_result.stderr)
 
-    # sudo hostapd /path/to/hoster-hostapd.conf
     result = subprocess.run([f"sudo nmcli connection up \"{Plugin.network_name}\" ifname wlan0"], timeout=10, shell=True, capture_output=True, text=True)
     
     log(result.stdout)
     log(result.stderr)
 
-    # down_result.returncode == 0 and 
     if result.returncode == 0:
       success = True
       Plugin.should_monitor = True
