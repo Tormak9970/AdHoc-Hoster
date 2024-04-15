@@ -9,7 +9,7 @@ from typing import TypeVar
 
 Initialized = False
 T = TypeVar("T")
-
+OVERLAY_NAME = "AdHoc Hoster"
 
 def log(txt):
   decky_plugin.logger.info(txt)
@@ -43,7 +43,21 @@ class Plugin:
       decky_plugin.logger.error(message)
 
   
-  def check_for_dependencies(self):
+  def mount_overlayfs(self) -> bool:
+    lower_dir = ""
+    upper_dir = ""
+    work_dir = ""
+    merge_dir = ""
+
+    result = subprocess.run([f"systemd-mount -t overlay {OVERLAY_NAME} noauto,x-systemd.automount -o lowerdir=/lower, upperdir=/upper, workdir=/work /merged"], timeout=10, shell=True, capture_output=True, text=True)
+    return result.returncode == 0
+  
+  def unmount_overlayfs(self) -> bool:
+    result = subprocess.run([f"systemd-unmount {OVERLAY_NAME}"], timeout=10, shell=True, capture_output=True, text=True)
+    return result.returncode == 0
+
+
+  def check_for_dependencies(self) -> bool:
     # * dnsmasq
     result = subprocess.run([f"sudo pacman -Q dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
     return "error" not in result.stdout
