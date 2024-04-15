@@ -43,7 +43,8 @@ class Plugin:
       decky_plugin.logger.error(message)
 
   
-  def check_for_dnsmasq(self):
+  def check_for_dependencies(self):
+    # * dnsmasq
     result = subprocess.run([f"sudo pacman -Q dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
     return "error" not in result.stdout
 
