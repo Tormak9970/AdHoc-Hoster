@@ -90,7 +90,7 @@ class Plugin:
 
     @returns The network update
     """
-    while Plugin.network_updates.count() == 0:
+    while len(Plugin.network_updates) == 0:
       await asyncio.sleep(0.1)
       
     update = list.pop(0)
