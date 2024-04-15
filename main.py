@@ -115,6 +115,14 @@ class Plugin:
     return success
   
   async def kill_network(self) -> bool:
+    # * This method may work
+    # result_off = subprocess.run([f"sudo nmcli r wifi off"], timeout=10, shell=True, capture_output=True, text=True)
+    # result_on = subprocess.run([f"sudo nmcli r wifi on"], timeout=10, shell=True, capture_output=True, text=True)
+
+    # if result_off.returncode == 0 and result_on.returncode == 0:
+    #   success = True
+    #   Plugin.should_monitor = False
+
     success = False
     result = subprocess.run([f"sudo nmcli connection down \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     
