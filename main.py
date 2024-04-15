@@ -10,16 +10,13 @@ from typing import TypeVar
 
 Initialized = False
 T = TypeVar("T")
-BASE_OVERLAY_NAME = "adhoc-hoster-overlay"
-base_dir = "~/adhoc-hoster/"
-lower_dirs = [ "lib/holo/pacmandb", "lib64/holo/pacmandb", "usr", "etc", "var/cache/pacman", "var/lib/pacman" ] #, "etc/pacman.d"
-base_upper_dir = base_dir + "upper"
-base_work_dir = base_dir + "work"
-base_merged_dir = base_dir + "merged"
 
 # * Utility functions
 def log(txt):
   decky_plugin.logger.info(txt)
+  
+def error(txt):
+  decky_plugin.logger.error(txt)
 
 def obfuscate(value: str) -> str:
   return codecs.encode(value, "rot13")
@@ -29,90 +26,67 @@ def deobfuscate(obfuscated: str) -> str:
 
 def init_pacman_key() -> bool:
   result = subprocess.run([f"sudo pacman-key --init"], timeout=10, shell=True, capture_output=True, text=True)
+
+  # TODO: may need to populate keyring
+
   return result.returncode == 0
 
 # * FS overlay functions
 def mount_overlays() -> bool:
-  success = True
+  if not os.path.exists(os.path.join(decky_plugin.DECKY_PLUGIN_RUNTIME_DIR, "rwfus")):
+    clone_result = subprocess.run([f"sudo git clone https://github.com/ValShaped/rwfus.git"], cwd=decky_plugin.DECKY_PLUGIN_RUNTIME_DIR, timeout=10, shell=True, capture_output=True, text=True)
 
-  for lower_dir in lower_dirs:
-    transformed = lower_dir.replace("/", "-")
-    overlay_name = BASE_OVERLAY_NAME + "-" + transformed
-    upper_dir = base_upper_dir + "/" + transformed
-    work_dir = base_work_dir + "/" + transformed
-    merged_dir = base_merged_dir + "/" + transformed
+    if clone_result.returncode != 0:
+      error(f"Failed to clone rwfus")
+      log(clone_result.stderr)
+      return False
 
-    if not os.path.exists(upper_dir):
-      os.makedirs(upper_dir)
-
-    if not os.path.exists(work_dir):
-      os.makedirs(work_dir)
-
-    if not os.path.exists(merged_dir):
-      os.makedirs(merged_dir)
-
-    result = subprocess.run([f"sudo mount -t overlay {overlay_name} noauto,x-systemd.automount -o lowerdir=/{lower_dir}, upperdir={upper_dir}, workdir={work_dir} {merged_dir}"], timeout=10, shell=True, capture_output=True, text=True)
+  install_result = subprocess.run([f"sudo ./rwfus/rwfus -iI"], cwd=decky_plugin.DECKY_PLUGIN_RUNTIME_DIR, timeout=30, shell=True, capture_output=True, text=True)
     
-    if result.returncode != 0:
-      success = False
-      break
+  if install_result.returncode != 0:
+    error(f"Failed to install rwfus")
+    log(install_result.stderr)
+    return False
+  else:
+    log(f"Mounted overlays using rwfus.")
 
-  return success
+  return True
 
-def mounts_exist() -> bool:
-  success = True
-
-  for lower_dir in lower_dirs:
-    transformed = lower_dir.replace("/", "-")
-    overlay_name = BASE_OVERLAY_NAME + "-" + transformed
-
-    result = subprocess.run([f"sudo mountpoint {overlay_name}"], timeout=10, shell=True, capture_output=True, text=True)
-    
-    if result.returncode != 0:
-      success = False
-      break
-
-  return success
+def rwfus_exists() -> bool:
+  return os.path.exists("/opt/rwfus")
 
 def unmount_overlays() -> bool:
-  success = True
-
-  for lower_dir in lower_dirs:
-    transformed = lower_dir.replace("/", "-")
-    overlay_name = BASE_OVERLAY_NAME + "-" + transformed
-    upper_dir = base_upper_dir + "/" + transformed
-    work_dir = base_work_dir + "/" + transformed
-    merged_dir = base_merged_dir + "/" + transformed
-
-    if os.path.exists(upper_dir):
-      rmtree(upper_dir)
-
-    if os.path.exists(work_dir):
-      rmtree(work_dir)
-
-    if os.path.exists(merged_dir):
-      rmtree(merged_dir)
-
-    result = subprocess.run([f"sudo unmount {overlay_name}"], timeout=10, shell=True, capture_output=True, text=True)
+  uninstall_result = subprocess.run([f"( echo y ; echo y ) | sudo ./rwfus/rwfus -rR"], cwd=decky_plugin.DECKY_PLUGIN_RUNTIME_DIR, timeout=30, shell=True, capture_output=True, text=True)
     
-    if result.returncode != 0:
-      success = False
-      break
+  if uninstall_result.returncode != 0:
+    error(f"Failed to uninstall rwfus")
+    log(uninstall_result.stderr)
+    return False
+  else:
+    log(f"Uninstalled rwfus.")
+    rm_result = subprocess.run([f"sudo rm -r ./rwfus"], cwd=decky_plugin.DECKY_PLUGIN_RUNTIME_DIR, timeout=10, shell=True, capture_output=True, text=True)
+    
+    if rm_result.returncode != 0:
+      error(f"Failed to remove ./rwfus")
+      log(rm_result.stderr)
+      return False
 
-  return success
+  return True
 
 
+# ! Not verified
 # * dnsmasq functions
 def install_dnsmasq() -> bool:
-  return False
-
-def dnsmasq_exists() -> bool:
-  # * dnsmasq
-  result = subprocess.run([f"sudo pacman -Q dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
+  result = subprocess.run([f"sudo pacman -Sy dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
   return result.returncode == 0
 
+def dnsmasq_exists() -> bool:
+  result = subprocess.run([f"sudo pacman -Q dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
+  return "Error" not in result.stdout
+
 def uninstall_dnsmasq() -> bool:
-  return False
+  result = subprocess.run([f"sudo pacman -Rc dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
+  return result.returncode == 0
 
 
 class Plugin:
@@ -127,6 +101,8 @@ class Plugin:
   network_name: str = None
   network_password: str = None
 
+  rwfus_existed_before_install: bool = False
+
   # * Logger
   async def logMessage(self, message, level):
     if level == 0:
@@ -134,9 +110,8 @@ class Plugin:
     elif level == 1:
       decky_plugin.logger.warn(message)
     elif level == 2:
-      decky_plugin.logger.error(message)
+      error(message)
 
-  
   # * Connection functions
   def create_connection() -> bool:
     result = subprocess.run([f"sudo nmcli connection add type wifi ifname wlan0 ssid \"{Plugin.network_name}\" con-name \"{Plugin.network_name}\" wifi-sec.key-mgmt wpa-psk wifi-sec.psk \"{Plugin.network_password}\" wifi.mode ap connection.autoconnect no ipv4.method shared ipv6.method ignore"], timeout=10, shell=True, capture_output=True, text=True)
@@ -144,14 +119,16 @@ class Plugin:
 
   def connection_exists() -> bool:
     result = subprocess.run([f"sudo nmcli -f connection.id connection show \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
-    return result.returncode == 0
+    return "Error" not in result.stdout
   
+  # ! Not verified
   def delete_connection() -> bool:
     result = subprocess.run([f"sudo nmcli connection delete \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     return result.returncode == 0
 
 
   # * network functions
+  # ! Not verified
   async def monitor_network_updates(self):
     wait_time = 0.5 # TODO: find a good time balance
     monitored_process = None
@@ -195,6 +172,8 @@ class Plugin:
     
     if not Plugin.connection_exists():
       Plugin.create_connection()
+
+    dnsmasq_result = subprocess.run([f"sudo killall dnsmasq; sudo dnsmasq --port=9990 --interface=wlan0 --dhcp-range=10.0.0.3,10.0.0.20,12h"], timeout=10, shell=True, capture_output=True, text=True)
 
     down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
     
@@ -354,6 +333,15 @@ class Plugin:
     Plugin.settings.read()
     Plugin.users_dict = await Plugin.get_setting(self, "usersDict", {})
 
+    existed = await Plugin.get_setting(self, "rwfusExistedBeforeInstall", None)
+
+    if existed is None:
+      if rwfus_exists():
+        Plugin.rwfus_existed_before_install = True
+        await Plugin.set_setting(self, "rwfusExistedBeforeInstall", True)
+      else:
+        await Plugin.set_setting(self, "rwfusExistedBeforeInstall", False)
+
 
   # * Plugin settingsManager wrappers
   async def get_setting(self, key, default: T) -> T:
@@ -400,11 +388,14 @@ class Plugin:
 
     log("Initialized AdHoc Hoster.")
 
-    if not mounts_exist():
-      mount_overlays()
-      log("Mounted OverlayFS.")
-    else:
-      log("OverlayFS already mounted.")
+    if not rwfus_exists():
+      Plugin.rwfus_existed_before_install = False
+      await Plugin.set_setting(self, "rwfusExistedBeforeInstall", False)
+
+      if mount_overlays():
+        log("Mounted OverlayFS via rwfus.")
+      else:
+        error("Failed to mount OverlayFS via rwfus")
 
     if init_pacman_key():
       log("Initialized pacman keyring.")
@@ -412,8 +403,8 @@ class Plugin:
       Plugin.logMessage(self, "Failed to initialize pacman keyring")
 
     if not dnsmasq_exists():
-      install_dnsmasq()
-      log("Installed dnsmasq.")
+      if install_dnsmasq():
+        log("Installed dnsmasq.")
     else:
       log("dnsmasq already installed.")
 
@@ -432,10 +423,13 @@ class Plugin:
     else:
       Plugin.logMessage(self, "Failed to remove dnsmasq.", 2)
 
-    if unmount_overlays():
-      log("Successfully unmounted overlay.")
+    if not Plugin.rwfus_existed_before_install:
+      if unmount_overlays():
+        log("Successfully unmounted overlay.")
+      else:
+        Plugin.logMessage(self, "Failed to unmount overlay.", 2)
     else:
-      Plugin.logMessage(self, "Failed to unmount overlay.", 2)
+      log("rwfus already exists")
       
     log("Unloading AdHoc Hoster.")
 
