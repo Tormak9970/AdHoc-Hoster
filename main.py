@@ -3,17 +3,23 @@ import subprocess
 import os
 import codecs
 import decky_plugin
+from shutil import rmtree
 from settings import SettingsManager
 from typing import TypeVar
 
 
 Initialized = False
 T = TypeVar("T")
-OVERLAY_NAME = "AdHoc Hoster"
+BASE_OVERLAY_NAME = "adhoc-hoster-overlay"
+base_dir = "~/adhoc-hoster/"
+lower_dirs = [ "lib/holo/pacmandb", "lib64/holo/pacmandb", "usr", "etc", "var/cache/pacman", "var/lib/pacman" ] #, "etc/pacman.d"
+base_upper_dir = base_dir + "upper"
+base_work_dir = base_dir + "work"
+base_merged_dir = base_dir + "merged"
 
+# * Utility functions
 def log(txt):
   decky_plugin.logger.info(txt)
-
 
 def obfuscate(value: str) -> str:
   return codecs.encode(value, "rot13")
@@ -21,19 +27,107 @@ def obfuscate(value: str) -> str:
 def deobfuscate(obfuscated: str) -> str:
   return codecs.decode(obfuscated, "rot13")
 
+def init_pacman_key() -> bool:
+  result = subprocess.run([f"sudo pacman-key --init"], timeout=10, shell=True, capture_output=True, text=True)
+  return result.returncode == 0
+
+# * FS overlay functions
+def mount_overlays() -> bool:
+  success = True
+
+  for lower_dir in lower_dirs:
+    transformed = lower_dir.replace("/", "-")
+    overlay_name = BASE_OVERLAY_NAME + "-" + transformed
+    upper_dir = base_upper_dir + "/" + transformed
+    work_dir = base_work_dir + "/" + transformed
+    merged_dir = base_merged_dir + "/" + transformed
+
+    if not os.path.exists(upper_dir):
+      os.makedirs(upper_dir)
+
+    if not os.path.exists(work_dir):
+      os.makedirs(work_dir)
+
+    if not os.path.exists(merged_dir):
+      os.makedirs(merged_dir)
+
+    result = subprocess.run([f"sudo mount -t overlay {overlay_name} noauto,x-systemd.automount -o lowerdir=/{lower_dir}, upperdir={upper_dir}, workdir={work_dir} {merged_dir}"], timeout=10, shell=True, capture_output=True, text=True)
+    
+    if result.returncode != 0:
+      success = False
+      break
+
+  return success
+
+def mounts_exist() -> bool:
+  success = True
+
+  for lower_dir in lower_dirs:
+    transformed = lower_dir.replace("/", "-")
+    overlay_name = BASE_OVERLAY_NAME + "-" + transformed
+
+    result = subprocess.run([f"sudo mountpoint {overlay_name}"], timeout=10, shell=True, capture_output=True, text=True)
+    
+    if result.returncode != 0:
+      success = False
+      break
+
+  return success
+
+def unmount_overlays() -> bool:
+  success = True
+
+  for lower_dir in lower_dirs:
+    transformed = lower_dir.replace("/", "-")
+    overlay_name = BASE_OVERLAY_NAME + "-" + transformed
+    upper_dir = base_upper_dir + "/" + transformed
+    work_dir = base_work_dir + "/" + transformed
+    merged_dir = base_merged_dir + "/" + transformed
+
+    if os.path.exists(upper_dir):
+      rmtree(upper_dir)
+
+    if os.path.exists(work_dir):
+      rmtree(work_dir)
+
+    if os.path.exists(merged_dir):
+      rmtree(merged_dir)
+
+    result = subprocess.run([f"sudo unmount {overlay_name}"], timeout=10, shell=True, capture_output=True, text=True)
+    
+    if result.returncode != 0:
+      success = False
+      break
+
+  return success
+
+
+# * dnsmasq functions
+def install_dnsmasq() -> bool:
+  return False
+
+def dnsmasq_exists() -> bool:
+  # * dnsmasq
+  result = subprocess.run([f"sudo pacman -Q dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
+  return result.returncode == 0
+
+def uninstall_dnsmasq() -> bool:
+  return False
+
+
 class Plugin:
-  network_updates: list[str] = [] # * Will function like a stack
-  should_monitor: bool = False
+  settings: SettingsManager
 
   user_id: str = None
   users_dict: dict[str, dict] = None
 
+  network_updates: list[str] = [] # * Will function like a stack
+  should_monitor: bool = False
+
   network_name: str = None
   network_password: str = None
 
-  settings: SettingsManager
-
-
+  # * Logger
   async def logMessage(self, message, level):
     if level == 0:
       log(message)
@@ -43,26 +137,21 @@ class Plugin:
       decky_plugin.logger.error(message)
 
   
-  def mount_overlayfs(self) -> bool:
-    lower_dir = ""
-    upper_dir = ""
-    work_dir = ""
-    merge_dir = ""
+  # * Connection functions
+  def create_connection() -> bool:
+    result = subprocess.run([f"sudo nmcli connection add type wifi ifname wlan0 ssid \"{Plugin.network_name}\" con-name \"{Plugin.network_name}\" wifi-sec.key-mgmt wpa-psk wifi-sec.psk \"{Plugin.network_password}\" wifi.mode ap connection.autoconnect no ipv4.method shared ipv6.method ignore"], timeout=10, shell=True, capture_output=True, text=True)
+    return result.returncode == 0
 
-    result = subprocess.run([f"systemd-mount -t overlay {OVERLAY_NAME} noauto,x-systemd.automount -o lowerdir=/lower, upperdir=/upper, workdir=/work /merged"], timeout=10, shell=True, capture_output=True, text=True)
+  def connection_exists() -> bool:
+    result = subprocess.run([f"sudo nmcli -f connection.id connection show \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     return result.returncode == 0
   
-  def unmount_overlayfs(self) -> bool:
-    result = subprocess.run([f"systemd-unmount {OVERLAY_NAME}"], timeout=10, shell=True, capture_output=True, text=True)
+  def delete_connection() -> bool:
+    result = subprocess.run([f"sudo nmcli connection delete \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     return result.returncode == 0
 
 
-  def check_for_dependencies(self) -> bool:
-    # * dnsmasq
-    result = subprocess.run([f"sudo pacman -Q dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
-    return "error" not in result.stdout
-
-
+  # * network functions
   async def monitor_network_updates(self):
     wait_time = 0.5 # TODO: find a good time balance
     monitored_process = None
@@ -73,7 +162,7 @@ class Plugin:
       if Plugin.should_monitor:
         # * start monitoring if needed
         if monitored_process is None:
-          monitored_process = subprocess.Popen(["nmcli", "connection", "monitor", Plugin.network_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+          monitored_process = subprocess.Popen(["sudo", "nmcli", "connection", "monitor", Plugin.network_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
           log(f"Started monitoring {Plugin.network_name}")
         else:
           try:
@@ -87,17 +176,7 @@ class Plugin:
         monitored_process = None
         Plugin.network_updates = []
         log(f"Stopped monitoring {Plugin.network_name}")
-
-  def connection_exists() -> bool:
-    result = subprocess.run([f"sudo nmcli -f connection.id connection show \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
-    return not "Error" in result.stdout
   
-  def create_adhoc_hoster_connection() -> bool:
-    result = subprocess.run([f"sudo nmcli connection add type wifi ifname wlan0 ssid \"{Plugin.network_name}\" con-name \"{Plugin.network_name}\" wifi-sec.key-mgmt wpa-psk wifi-sec.psk \"{Plugin.network_password}\" wifi.mode ap connection.autoconnect no ipv4.method shared ipv6.method ignore"], timeout=10, shell=True, capture_output=True, text=True)
-
-    return "successfully added" in result.stdout
-
-
   async def get_next_network_update(self) -> str:
     """
     Waits until there is a network update available, then returns it
@@ -115,26 +194,26 @@ class Plugin:
     success = False
     
     if not Plugin.connection_exists():
-      Plugin.create_adhoc_hoster_connection()
+      Plugin.create_connection()
 
-    # down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
+    down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
     
-    # log(down_result.stdout)
-    # log(down_result.stderr)
+    log(down_result.stdout)
+    log(down_result.stderr)
 
     result = subprocess.run([f"sudo nmcli connection up \"{Plugin.network_name}\" ifname wlan0"], timeout=10, shell=True, capture_output=True, text=True)
     
     log(result.stdout)
     log(result.stderr)
 
-    # down_result.returncode == 0 and
-    if result.returncode == 0:
+    if down_result.returncode == 0 and result.returncode == 0:
       success = True
       Plugin.should_monitor = True
 
     return success
   
   async def kill_network(self) -> bool:
+    success = False
     # * This method may work
     # result_off = subprocess.run([f"sudo nmcli r wifi off"], timeout=10, shell=True, capture_output=True, text=True)
     # result_on = subprocess.run([f"sudo nmcli r wifi on"], timeout=10, shell=True, capture_output=True, text=True)
@@ -143,7 +222,6 @@ class Plugin:
     #   success = True
     #   Plugin.should_monitor = False
 
-    success = False
     result = subprocess.run([f"sudo nmcli connection down \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     
     log(result.stdout)
@@ -322,12 +400,44 @@ class Plugin:
 
     log("Initialized AdHoc Hoster.")
 
+    if not mounts_exist():
+      mount_overlays()
+      log("Mounted OverlayFS.")
+    else:
+      log("OverlayFS already mounted.")
+
+    if init_pacman_key():
+      log("Initialized pacman keyring.")
+    else:
+      Plugin.logMessage(self, "Failed to initialize pacman keyring")
+
+    if not dnsmasq_exists():
+      install_dnsmasq()
+      log("Installed dnsmasq.")
+    else:
+      log("dnsmasq already installed.")
+
     await Plugin.monitor_network_updates(self)
 
 
   # * Function called first during the unload process, utilize this to handle your plugin being removed
   async def _unload(self):
-    decky_plugin.logger.info("Unloading AdHoc Hoster.")
+    if Plugin.delete_connection():
+      log("Successfully removed nmcli connection.")
+    else:
+      Plugin.logMessage(self, "Failed to remove nmcli connection.", 2)
+
+    if uninstall_dnsmasq():
+      log("Successfully removed dnsmasq.")
+    else:
+      Plugin.logMessage(self, "Failed to remove dnsmasq.", 2)
+
+    if unmount_overlays():
+      log("Successfully unmounted overlay.")
+    else:
+      Plugin.logMessage(self, "Failed to unmount overlay.", 2)
+      
+    log("Unloading AdHoc Hoster.")
 
 
   # * Migrations that should be performed before entering `_main()`.
