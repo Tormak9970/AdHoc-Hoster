@@ -4,7 +4,7 @@ import { LogController } from "../lib/controllers/LogController";
 import { FaBan, FaCircleExclamation, FaPlay } from "react-icons/fa6";
 import { QamStyles } from "./styles/QamStyles";
 import { usePluginState } from "../state/PluginContext";
-import { DialogButton, Field, Focusable, PanelSection, SteamSpinner } from "decky-frontend-lib";
+import { DialogButton, Field, Focusable, PanelSection } from "decky-frontend-lib";
 import { showNetworkSettingsModal } from "./modals/NetworkSettingsModal";
 import { PluginState } from "../state/PluginState";
 import { PythonInterop } from "../lib/controllers/PythonInterop";
@@ -18,8 +18,9 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
 
   async function handleButtonClick() {
     setIsLoading(true);
+    
     if (isNetworkRunning) {
-      PythonInterop.killNetwork().then((success) => {
+      await PythonInterop.killNetwork().then((success) => {
         if (success) {
           LogController.log("Killed the adHoc network.");
           setIsNetworkRunning(!isNetworkRunning);
@@ -30,7 +31,7 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
         }
       });
     } else {
-      PythonInterop.startNetwork().then((success) => {
+      await PythonInterop.startNetwork().then((success) => {
         if (success) {
           LogController.log("Started the adHoc network.");
           setIsNetworkRunning(!isNetworkRunning);

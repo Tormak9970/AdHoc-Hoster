@@ -166,28 +166,34 @@ class Plugin:
 
   async def start_network(self) -> bool:
     success = False
-    
-    if not Plugin.connection_exists():
-      Plugin.create_connection()
 
-    dnsmasq_result = subprocess.run([f"sudo killall dnsmasq; sudo dnsmasq --port=9990 --interface=wlan0 --dhcp-range=10.0.0.3,10.0.0.20,12h"], timeout=10, shell=True, capture_output=True, text=True)
+    log("starting network...")
     
-    log(dnsmasq_result.stdout)
-    log(dnsmasq_result.stderr)
+    # if not Plugin.connection_exists():
+    #   log("connection dne")
+    #   Plugin.create_connection()
+    #   log("made connection")
+      
+    # log("step 2...")
 
-    down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
+    # dnsmasq_result = subprocess.run([f"sudo killall dnsmasq; sudo dnsmasq --port=9990 --interface=wlan0 --dhcp-range=10.0.0.3,10.0.0.20,12h"], timeout=10, shell=True, capture_output=True, text=True)
     
-    log(down_result.stdout)
-    log(down_result.stderr)
+    # log(dnsmasq_result.stdout)
+    # log(dnsmasq_result.stderr)
 
-    result = subprocess.run([f"sudo nmcli connection up \"{Plugin.network_name}\" ifname wlan0"], timeout=10, shell=True, capture_output=True, text=True)
+    # down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
     
-    log(result.stdout)
-    log(result.stderr)
+    # log(down_result.stdout)
+    # log(down_result.stderr)
 
-    if down_result.returncode == 0 and result.returncode == 0:
-      success = True
-      Plugin.should_monitor = True
+    # result = subprocess.run([f"sudo nmcli connection up \"{Plugin.network_name}\" ifname wlan0"], timeout=10, shell=True, capture_output=True, text=True)
+    
+    # log(result.stdout)
+    # log(result.stderr)
+
+    # if down_result.returncode == 0 and result.returncode == 0:
+    #   success = True
+    #   Plugin.should_monitor = True
 
     return success
   
