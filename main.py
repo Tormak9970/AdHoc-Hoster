@@ -26,9 +26,6 @@ def deobfuscate(obfuscated: str) -> str:
 
 def init_pacman_key() -> bool:
   result = subprocess.run([f"sudo pacman-key --init"], timeout=10, shell=True, capture_output=True, text=True)
-
-  # TODO: may need to populate keyring
-
   return result.returncode == 0
 
 # * FS overlay functions
@@ -74,18 +71,17 @@ def unmount_overlays() -> bool:
   return True
 
 
-# ! Not verified
 # * dnsmasq functions
 def install_dnsmasq() -> bool:
-  result = subprocess.run([f"sudo pacman -Sy dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
+  result = subprocess.run([f"( echo y ) | sudo pacman -Sy dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
   return result.returncode == 0
 
 def dnsmasq_exists() -> bool:
   result = subprocess.run([f"sudo pacman -Q dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
-  return "Error" not in result.stdout
+  return result.returncode == 0
 
 def uninstall_dnsmasq() -> bool:
-  result = subprocess.run([f"sudo pacman -Rc dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
+  result = subprocess.run([f"( echo y ) | sudo pacman -Rc dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
   return result.returncode == 0
 
 
@@ -119,7 +115,8 @@ class Plugin:
 
   def connection_exists() -> bool:
     result = subprocess.run([f"sudo nmcli -f connection.id connection show \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
-    return "Error" not in result.stdout
+    # return "Error" not in result.stdout
+    return result.returncode == 0
   
   # ! Not verified
   def delete_connection() -> bool:
@@ -174,6 +171,9 @@ class Plugin:
       Plugin.create_connection()
 
     dnsmasq_result = subprocess.run([f"sudo killall dnsmasq; sudo dnsmasq --port=9990 --interface=wlan0 --dhcp-range=10.0.0.3,10.0.0.20,12h"], timeout=10, shell=True, capture_output=True, text=True)
+    
+    log(dnsmasq_result.stdout)
+    log(dnsmasq_result.stderr)
 
     down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
     
