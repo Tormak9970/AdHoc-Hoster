@@ -11,7 +11,7 @@ import { PythonInterop } from "./lib/controllers/PythonInterop";
 import { PluginContextProvider } from "./state/PluginContext";
 import { PluginState } from "./state/PluginState";
 import { QuickAccessContent } from "./components/QuickAccessContent";
-import { patchWifiSymbol } from "./patches/WifiSymbolPatch";
+import { patchWifiSymbol, unpatchWifiSymbol } from "./patches/WifiSymbolPatch";
 
 declare global {
   var SteamClient: SteamClient;
@@ -44,6 +44,9 @@ export default definePlugin((serverAPI: ServerAPI) => {
     icon: <LuNetwork />,
     onDismount: () => {
       loginUnregisterer.unregister();
+      unpatchWifiSymbol();
+
+      
       PluginController.dismount();
     },
   };

@@ -1,93 +1,87 @@
-// LiaNetworkWired for the network icon
-
-import { findInReactTree, sleep } from "decky-frontend-lib"
-import { reactTree, routePath } from "./init"
+import { afterPatch, findInReactTree, getReactRoot, sleep } from "decky-frontend-lib"
 import { LogController } from "../lib/controllers/LogController"
 import { PluginState } from "../state/PluginState"
+import { PiShareNetworkBold } from "react-icons/pi"
 
-export const searchBarPatchState = { isPatched: false }
+const reactTree = getReactRoot(document.getElementById('root') as any);
 
-export let unpatchWifiSymbol: () => void = () => { }
+/**
+ * Gets the wifi icon element.
+ * @returns The wifi icon.
+ */
+async function getWifiIcon(): Promise<any> {
+  let wifiIconNode: any;
+  let t = 0;
 
-export const patchWifiSymbol = async (pluginState: PluginState) => {
-  let searchBarRootNode: any
-  let t = 0
-  while (!searchBarRootNode) {
-    searchBarRootNode = findInReactTree(reactTree, node => node?.type?.toString().includes('SetUniversalSearchFocused') && node?.type?.toString().includes('GetForceHeaderAfterResume'));
-    if (searchBarRootNode) continue;
+  while (!wifiIconNode) {
+    wifiIconNode = findInReactTree(reactTree, node => node?.type?.toString().includes('WirelessConnectingActive') && node?.type?.toString().includes('WirelessNetwork'));
+    
+    if (wifiIconNode) continue;
 
     if (t >= 20000) {
-      LogController.log('Search Bar Patch', `Failed to find search bar root node after ${t / 1000} sec.`);
-      searchBarPatchState.isPatched = false;
+      LogController.log('Wifi Icon', `Failed to find wifi icon node after ${t / 1000} sec.`);
       return;
     }
 
     t += 200;
     await sleep(200);
   }
-  const orig = searchBarRootNode.type;
 
-  const searchBarRootWrapper = (props: any) => {
+  return wifiIconNode;
+}
+
+/**
+ * Patches the wifi icon element.
+ * @param patch The patch function.
+ * @returns The unpatch function.
+ */
+async function patchWifiIcon(patch: (ret: any) => any): Promise<() => void> {
+  let wifiIconNode: any = await getWifiIcon();
+
+  const orig = wifiIconNode.type;
+
+  const wifiIconWrapper = (props: any) => {
     const ret = orig(props);
 
-    if (window.location.pathname === '/routes' + routePath) {
-      const res = findLocation(ret, (node: any) => {
-        if (!node.type) return false;
-
-        const fnString = node.type.toString?.();
-        return fnString?.includes('GamepadUI.Search.Root') && fnString?.includes('SearchBox');
-      });
-
-      if (res) {
-        const [parent, key] = res;
-        parent[key] = <SearchBarInput tabManager={tabManager} />;
-        searchBarPatchState.isPatched = true;
-      } else {
-        LogController.log("Search Bar Patch", 'Failed to find search bar element to patch.');
-        searchBarPatchState.isPatched = false;
-      }
-    }
+    patch(ret);
     
     return ret;
   }
-  searchBarRootNode.type = searchBarRootWrapper;
-  if (searchBarRootNode.alternate) {
-    searchBarRootNode.alternate.type = searchBarRootNode.type;
+
+  wifiIconNode.type = wifiIconWrapper;
+
+  if (wifiIconNode.alternate) {
+    wifiIconNode.alternate.type = wifiIconNode.type;
   }
 
-  unpatchWifiSymbol = () => {
-    searchBarRootNode.type = orig;
-    searchBarRootNode.alternate.type = searchBarRootNode.type;
+  return () => {
+    wifiIconNode.type = orig;
+    wifiIconNode.alternate.type = wifiIconNode.type;
   }
 }
 
-const findLocation = (parent: any, filter: any) => {
-  const walkable = ['props', 'children'];
-  if (!parent || typeof parent !== 'object') return;
+/**
+ * Unpatches the wifi symbol.
+ */
+export let unpatchWifiSymbol: () => void = () => {};
 
-  if (Array.isArray(parent)) {
-    for (let i = 0; i < parent.length; i++) {
-      if (!parent[i]) continue;
-      if (filter(parent[i])) return [parent, i];
-    }
+/**
+ * Patches
+ * @param pluginState The plugin's state.
+ */
+export async function patchWifiSymbol(pluginState: PluginState): Promise<void> {
+  const patch = (ret: any) => {
+    afterPatch(ret, 'type', (_: any, ret2: any) => {
+      const { isNetworkRunning, connectedDevices } = pluginState.getPublicState();
 
-    for (let i = 0; i < parent.length; i++) {
-      if (!parent[i]) continue;
-
-      const next: any = findLocation(parent[i], filter);
-      if (next) return next;
-    }
-  } else {
-    for (const prop of walkable) {
-      if (!parent[prop]) continue;
-      if (filter(parent[prop])) return [parent, prop];
-    }
-
-    for (const prop of walkable) {
-      if (!parent[prop]) continue;
-
-      const next: any = findLocation(parent[prop], filter);
-      if (next) return next;
-    }
+      return isNetworkRunning ? (
+        <div style={{ height: "18px", display: "flex", alignItems: "center" }}>
+          <PiShareNetworkBold className="adhoc-hoster-p2p-icon" />
+          <div style={{ marginLeft: "7px", lineHeight: "16px" }}>{connectedDevices.length}</div>
+        </div>
+      ) : ret2
+    });
   }
-} 
+
+  unpatchWifiSymbol = await patchWifiIcon(patch);
+}

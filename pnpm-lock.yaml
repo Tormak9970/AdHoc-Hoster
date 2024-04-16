@@ -50,8 +50,8 @@ devDependencies:
     specifier: ^5.28.1
     version: 5.28.1
   decky-frontend-lib:
-    specifier: ^3.21.8
-    version: 3.21.8
+    specifier: ^3.25.0
+    version: 3.25.0
   husky:
     specifier: ^8.0.3
     version: 8.0.3
@@ -923,8 +923,8 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /decky-frontend-lib@3.21.8:
-    resolution: {integrity: sha512-I45KWzoTSakUcsN7drHhiOc+rYKYygIsuYTHqc8DbpPDJvUx6xlU4t7D2TMrj9o/xS/V3WY9N/pX8eF6AcGT1g==}
+  /decky-frontend-lib@3.25.0:
+    resolution: {integrity: sha512-2lBoHS2AIRmuluq/bGdHBz+uyToQE7k3K/vDq1MQbDZ4eC+8CGDuh2T8yZOj3D0yjGP2MdikNNAWPA9Z5l2qDg==}
     dev: true
 
   /deepmerge@4.3.1:
