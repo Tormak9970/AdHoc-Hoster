@@ -28,6 +28,7 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
         } else {
           LogController.error("Failed to kill the adhoc network.");
           PythonInterop.toast("Error", "Failed to kill the adhoc network");
+          setIsLoading(false);
         }
       });
     } else {
@@ -39,6 +40,7 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
         } else {
           LogController.error("Failed to start the adhoc network.");
           PythonInterop.toast("Error", "Failed to start the adhoc network");
+          setIsLoading(false);
         }
       });
     }

@@ -3,7 +3,6 @@ import subprocess
 import os
 import codecs
 import decky_plugin
-from shutil import rmtree
 from settings import SettingsManager
 from typing import TypeVar
 
@@ -27,6 +26,7 @@ def deobfuscate(obfuscated: str) -> str:
 def init_pacman_key() -> bool:
   result = subprocess.run([f"sudo pacman-key --init"], timeout=10, shell=True, capture_output=True, text=True)
   return result.returncode == 0
+
 
 # * FS overlay functions
 def mount_overlays() -> bool:
@@ -74,7 +74,9 @@ def unmount_overlays() -> bool:
 # * dnsmasq functions
 def install_dnsmasq() -> bool:
   result = subprocess.run([f"( echo y ) | sudo pacman -Sy dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
-  return result.returncode == 0
+  cp_result = subprocess.run([f"sudo cp ./dnsmasq.conf /etc/dnsmasq.conf"], cwd=decky_plugin.DECKY_PLUGIN_DIR, timeout=10, shell=True, capture_output=True, text=True)
+
+  return result.returncode == 0 and cp_result.returncode == 0
 
 def dnsmasq_exists() -> bool:
   result = subprocess.run([f"sudo pacman -Q dnsmasq"], timeout=10, shell=True, capture_output=True, text=True)
@@ -96,8 +98,10 @@ class Plugin:
 
   network_name: str = None
   network_password: str = None
+  start_on_wake: bool = None
 
   rwfus_existed_before_install: bool = False
+
 
   # * Logger
   async def logMessage(self, message, level):
@@ -108,6 +112,7 @@ class Plugin:
     elif level == 2:
       error(message)
 
+
   # * Connection functions
   def create_connection() -> bool:
     result = subprocess.run([f"sudo nmcli connection add type wifi ifname wlan0 ssid \"{Plugin.network_name}\" con-name \"{Plugin.network_name}\" wifi-sec.key-mgmt wpa-psk wifi-sec.psk \"{Plugin.network_password}\" wifi.mode ap connection.autoconnect no ipv4.method shared ipv6.method ignore"], timeout=10, shell=True, capture_output=True, text=True)
@@ -115,10 +120,8 @@ class Plugin:
 
   def connection_exists() -> bool:
     result = subprocess.run([f"sudo nmcli -f connection.id connection show \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
-    # return "Error" not in result.stdout
     return result.returncode == 0
   
-  # ! Not verified
   def delete_connection() -> bool:
     result = subprocess.run([f"sudo nmcli connection delete \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     return result.returncode == 0
@@ -166,37 +169,21 @@ class Plugin:
 
   async def start_network(self) -> bool:
     success = False
-
-    log("starting network...")
     
-    # if not Plugin.connection_exists():
-    #   log("connection dne")
-    #   Plugin.create_connection()
-    #   log("made connection")
-      
-    # log("step 2...")
+    if not Plugin.connection_exists():
+      Plugin.create_connection()
 
-    # dnsmasq_result = subprocess.run([f"sudo killall dnsmasq; sudo dnsmasq --port=9990 --interface=wlan0 --dhcp-range=10.0.0.3,10.0.0.20,12h"], timeout=10, shell=True, capture_output=True, text=True)
-    
-    # log(dnsmasq_result.stdout)
-    # log(dnsmasq_result.stderr)
+    down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
+    result = subprocess.run([f"sudo nmcli connection up \"{Plugin.network_name}\" ifname wlan0"], timeout=10, shell=True, capture_output=True, text=True)
+    log(result.stdout)
 
-    # down_result = subprocess.run([f"sudo nmcli device down wlan0"], timeout=10, shell=True, capture_output=True, text=True)
-    
-    # log(down_result.stdout)
-    # log(down_result.stderr)
-
-    # result = subprocess.run([f"sudo nmcli connection up \"{Plugin.network_name}\" ifname wlan0"], timeout=10, shell=True, capture_output=True, text=True)
-    
-    # log(result.stdout)
-    # log(result.stderr)
-
-    # if down_result.returncode == 0 and result.returncode == 0:
-    #   success = True
-    #   Plugin.should_monitor = True
+    if down_result.returncode == 0 and result.returncode == 0:
+      success = True
+      Plugin.should_monitor = True
 
     return success
   
+  # ! Not verified
   async def kill_network(self) -> bool:
     success = False
     # * This method may work
@@ -210,6 +197,7 @@ class Plugin:
     result = subprocess.run([f"sudo nmcli connection down \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     
     log(result.stdout)
+    log(result.stderr)
 
     if result.returncode == 0:
       success = True
@@ -218,7 +206,7 @@ class Plugin:
     return success
 
 
-  # * Plugin settings getters
+  # * Plugin settings and getters
   async def get_users_dict(self) -> dict[str, dict] | None:
     """
     Waits until users_dict is loaded, then returns users_dict
@@ -255,6 +243,19 @@ class Plugin:
     Plugin.network_password = deobfuscate(Plugin.users_dict[Plugin.user_id]["networkPassword"])
     
     return Plugin.network_password or ""
+  
+  async def get_start_on_wake(self) -> str | None:
+    """
+    Waits until the users dictionary is loaded, then returns the user's start on wake
+
+    @return: Whether to start on wake from sleep
+    """
+    while Plugin.users_dict is None:
+      await asyncio.sleep(0.1)
+    
+    Plugin.start_on_wake = Plugin.users_dict[Plugin.user_id]["startOnWake"] or False
+    
+    return Plugin.start_on_wake
 
 
   # * Plugin settings setters
@@ -276,6 +277,7 @@ class Plugin:
 
       Plugin.users_dict[user_id] = {
         "networkName": "",
+        "startOnWake": False,
         "networkPassword": ""
       }
       await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
@@ -331,6 +333,10 @@ class Plugin:
       Plugin.logMessage(self, "Failed to update connection password!", 2)
       return False
 
+  async def set_start_on_wake(self, new_value: bool) -> bool:
+    Plugin.users_dict[Plugin.user_id]["startOnWake"] = new_value
+    await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
+    return True
 
   async def read(self) -> None:
     """

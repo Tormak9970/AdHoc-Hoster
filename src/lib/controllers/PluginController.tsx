@@ -85,13 +85,13 @@ export class PluginController {
    * Recursively listen for network updates.
    */
   private static async listenForNetworkUpdates(): Promise<void> {
-    PythonInterop.getNextNetworkUpdate().then((update: string | Error) => {
-      LogController.log(update);
+    // PythonInterop.getNextNetworkUpdate().then((update: string | Error) => {
+    //   LogController.log(update);
       
-      // TODO: parse update and set connected devices.
+    //   // TODO: parse update and set connected devices.
 
-      PluginController.listenForNetworkUpdates();
-    });
+    //   PluginController.listenForNetworkUpdates();
+    // });
   }
 
   static async onShutdown() {
