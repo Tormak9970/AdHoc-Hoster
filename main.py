@@ -133,26 +133,26 @@ class Plugin:
     wait_time = 0.5 # TODO: find a good time balance
     monitored_process = None
 
-    while True:
-      await asyncio.sleep(wait_time)
+    # while True:
+    #   await asyncio.sleep(wait_time)
 
-      if Plugin.should_monitor:
-        # * start monitoring if needed
-        if monitored_process is None:
-          monitored_process = subprocess.Popen(["sudo", "nmcli", "connection", "monitor", Plugin.network_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-          log(f"Started monitoring {Plugin.network_name}")
-        else:
-          try:
-            update, err = monitored_process.communicate()
-            if update != "":
-              Plugin.network_updates.append(update)
-              log(f"Recieved network update {update}")
-          except subprocess.TimeoutExpired:
-            continue
-      elif monitored_process is not None:
-        monitored_process = None
-        Plugin.network_updates = []
-        log(f"Stopped monitoring {Plugin.network_name}")
+    #   if Plugin.should_monitor:
+    #     # * start monitoring if needed
+    #     if monitored_process is None:
+    #       monitored_process = subprocess.Popen(["sudo", "nmcli", "connection", "monitor", Plugin.network_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    #       log(f"Started monitoring {Plugin.network_name}")
+    #     else:
+    #       try:
+    #         update, err = monitored_process.communicate()
+    #         if update != "":
+    #           Plugin.network_updates.append(update)
+    #           log(f"Recieved network update {update}")
+    #       except subprocess.TimeoutExpired:
+    #         continue
+    #   elif monitored_process is not None:
+    #     monitored_process = None
+    #     Plugin.network_updates = []
+    #     log(f"Stopped monitoring {Plugin.network_name}")
   
   async def get_next_network_update(self) -> str:
     """
@@ -183,21 +183,11 @@ class Plugin:
 
     return success
   
-  # ! Not verified
   async def kill_network(self) -> bool:
     success = False
-    # * This method may work
-    # result_off = subprocess.run([f"sudo nmcli r wifi off"], timeout=10, shell=True, capture_output=True, text=True)
-    # result_on = subprocess.run([f"sudo nmcli r wifi on"], timeout=10, shell=True, capture_output=True, text=True)
-
-    # if result_off.returncode == 0 and result_on.returncode == 0:
-    #   success = True
-    #   Plugin.should_monitor = False
-
-    result = subprocess.run([f"sudo nmcli connection down \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     
+    result = subprocess.run([f"sudo nmcli connection down \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     log(result.stdout)
-    log(result.stderr)
 
     if result.returncode == 0:
       success = True
