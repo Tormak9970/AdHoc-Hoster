@@ -11,6 +11,7 @@ import { PythonInterop } from "./lib/controllers/PythonInterop";
 import { PluginContextProvider } from "./state/PluginContext";
 import { PluginState } from "./state/PluginState";
 import { QuickAccessContent } from "./components/QuickAccessContent";
+import { patchWifiSymbol } from "./patches/WifiSymbolPatch";
 
 declare global {
   var SteamClient: SteamClient;
@@ -24,6 +25,10 @@ export default definePlugin((serverAPI: ServerAPI) => {
   PythonInterop.setServer(serverAPI);
   const pluginState = new PluginState()
   PluginController.setup(serverAPI, pluginState);
+
+  patchWifiSymbol(pluginState);
+  // TODO: repatch when system resumes
+  // const unregisterOnResume = SteamClient.System.RegisterForOnResumeFromSuspend(patchSearchBar).unregister
 
   const loginUnregisterer = PluginController.initOnLogin(async () => {
     // TODO: perform the actual route patching here

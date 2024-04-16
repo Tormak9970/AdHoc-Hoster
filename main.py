@@ -134,6 +134,7 @@ class Plugin:
     monitored_process = None
 
     # while True:
+    #   log("running monitor...")
     #   await asyncio.sleep(wait_time)
 
     #   if Plugin.should_monitor:
@@ -185,7 +186,7 @@ class Plugin:
   
   async def kill_network(self) -> bool:
     success = False
-    
+
     result = subprocess.run([f"sudo nmcli connection down \"{Plugin.network_name}\""], timeout=10, shell=True, capture_output=True, text=True)
     log(result.stdout)
 
@@ -410,7 +411,7 @@ class Plugin:
     else:
       log("dnsmasq already installed.")
 
-    await Plugin.monitor_network_updates(self)
+    Plugin.monitor_network_updates(self)
 
 
   # * Function called first during the unload process, utilize this to handle your plugin being removed
