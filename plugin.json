@@ -1,5 +1,5 @@
 {
-  "name": "AdHoc-Hoster",
+  "name": "Deck P2P",
   "author": "Travis Lane (Tormak)",
   "flags": ["debug", "root"],
   "publish": {
@@ -9,7 +9,7 @@
       "adhoc",
       "offline"
     ],
-    "description": "A Steamdeck plugin for easy Ad-Hoc network hosting from GameMode.",
-    "image": "https://raw.githubusercontent.com/Tormak9970/AdHoc-Hoster/main/assets/logo.png"
+    "description": "A Steamdeck plugin for easy Peer-2-Peer network hosting from GameMode.",
+    "image": "https://raw.githubusercontent.com/Tormak9970/Deck-P2P/main/assets/logo.png"
   }
 }

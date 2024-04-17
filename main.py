@@ -389,7 +389,7 @@ class Plugin:
     Plugin.settings = SettingsManager(name="settings", settings_directory=os.environ["DECKY_PLUGIN_SETTINGS_DIR"])
     await Plugin.read(self)
 
-    log("Initialized AdHoc Hoster.")
+    log("Initialized Deck P2P.")
 
     if not rwfus_exists():
       Plugin.rwfus_existed_before_install = False
@@ -434,7 +434,7 @@ class Plugin:
     else:
       log("rwfus already exists")
       
-    log("Unloading AdHoc Hoster.")
+    log("Unloading Deck P2P.")
 
 
   # * Migrations that should be performed before entering `_main()`.

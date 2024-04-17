@@ -27,16 +27,12 @@ export default definePlugin((serverAPI: ServerAPI) => {
   PluginController.setup(serverAPI, pluginState);
 
   patchWifiSymbol(pluginState);
-  // TODO: repatch when system resumes
-  // const unregisterOnResume = SteamClient.System.RegisterForOnResumeFromSuspend(patchSearchBar).unregister
+  const unregisterOnResume = SteamClient.System.RegisterForOnResumeFromSuspend(() => patchWifiSymbol(pluginState)).unregister;
 
-  const loginUnregisterer = PluginController.initOnLogin(async () => {
-    // TODO: perform the actual route patching here
-    // ex: libraryPatch = patchLibrary(serverAPI);
-  });
+  const loginUnregisterer = PluginController.initOnLogin(async () => { });
 
   return {
-    title: <div className={staticClasses.Title}>AdHoc Hoster</div>,
+    title: <div className={staticClasses.Title}>Deck P2P</div>,
     content:
       <PluginContextProvider pluginState={pluginState}>
         <QuickAccessContent pluginState={pluginState} />
@@ -45,7 +41,7 @@ export default definePlugin((serverAPI: ServerAPI) => {
     onDismount: () => {
       loginUnregisterer.unregister();
       unpatchWifiSymbol();
-
+      unregisterOnResume();
       
       PluginController.dismount();
     },

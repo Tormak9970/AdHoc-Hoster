@@ -18,13 +18,14 @@ export class PluginController {
   private static steamController: SteamController;
 
   private static onWakeSub: Unregisterer;
+  private static onSleepSub: Unregisterer;
 
   /**
    * Sets the plugin's serverAPI.
    * @param server The serverAPI to use.
    */
   static setup(server: ServerAPI, pluginState: PluginState): void {
-    LogController.setup("AdHoc-Hoster", "90f709");
+    LogController.setup("Deck P2P", "90f709");
 
     this.server = server;
     this.pluginState = pluginState;
@@ -58,8 +59,8 @@ export class PluginController {
    */
   static async init(): Promise<void> {
     LogController.log("PluginController initialized.");
-
     await PythonInterop.setActiveSteamId(getCurrentUserId());
+
 
     const networkName = await PythonInterop.getNetworkName();
     if (typeof networkName !== "string") {
@@ -94,12 +95,11 @@ export class PluginController {
     // });
   }
 
-  static async onShutdown() {
-    // ? May need this, not sure
-  }
-
+  /**
+   * Function to run before the deck is put to sleep.
+   */
   static async onSleep() {
-    // ? May need this, not sure
+    // TODO: if network is running, set that
   }
 
   /**
@@ -113,7 +113,9 @@ export class PluginController {
    * Function to run when the plugin dismounts.
    */
   static dismount(): void {
-    // TODO: dispose of any listeners and perform other cleanup here.
+    if (this.onWakeSub) this.onWakeSub.unregister();
+    if (this.onSleepSub) this.onSleepSub.unregister();
+
     LogController.log("PluginController dismounted.");
   }
 }

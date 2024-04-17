@@ -14,7 +14,7 @@ async function getWifiIcon(): Promise<any> {
   let t = 0;
 
   while (!wifiIconNode) {
-    wifiIconNode = findInReactTree(reactTree, node => node?.type?.toString().includes('WirelessConnectingActive') && node?.type?.toString().includes('WirelessNetwork'));
+    wifiIconNode = findInReactTree(reactTree, (node) => node?.type?.toString().includes('WirelessConnectingActive') && node?.type?.toString().includes('WirelessNetwork'));
     
     if (wifiIconNode) continue;
 
@@ -76,7 +76,7 @@ export async function patchWifiSymbol(pluginState: PluginState): Promise<void> {
 
       return isNetworkRunning ? (
         <div style={{ height: "18px", display: "flex", alignItems: "center" }}>
-          <PiShareNetworkBold className="adhoc-hoster-p2p-icon" />
+          <PiShareNetworkBold />
           <div style={{ marginLeft: "7px", lineHeight: "16px" }}>{connectedDevices.length}</div>
         </div>
       ) : ret2

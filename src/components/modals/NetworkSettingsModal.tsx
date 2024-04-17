@@ -135,7 +135,7 @@ const NetworkModalWrapper: VFC<{ pluginState: PluginState, closeModal?: () => vo
   return (
     <PluginContextProvider pluginState={pluginState}>
       <ModalStyles />
-      <div className="ad-hoc-hoster-modal-scope">
+      <div className="deck-p2p-modal-scope">
         <NetworkSettingsModal closeModal={closeModal} />
       </div>
     </PluginContextProvider>

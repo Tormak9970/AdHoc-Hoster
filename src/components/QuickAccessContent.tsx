@@ -47,16 +47,16 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
   }
 
   return (
-    <div className="adhoc-hoster-scope">
+    <div className="deck-p2p-scope">
       {LogController.errorFlag && <div style={{ padding: '0 15px', marginBottom: '40px' }}>
         <h3>
           <FaCircleExclamation style={{ height: '.8em', marginRight: '5px' }} fill="red" />
-          QuickStart encountered an error
+          Deck P2P encountered an error
         </h3>
         <div style={{ wordWrap: 'break-word' }}>
           Please reach out to
           <br />
-          <a href='https://github.com/Tormak9970/QuickStart/issues'>https://github.com/Tormak9970/QuickStart/issues</a>
+          <a href='https://github.com/Tormak9970/Deck-P2P/issues'>https://github.com/Tormak9970/Deck-P2P/issues</a>
           <br />
           {/* TODO: once you make a forum post for support for your plugin, add it here */}
           {/* or
@@ -89,7 +89,7 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
                   "height": "1.1em",
                   "borderRadius": "50%",
                   "backgroundColor": "#ffbd04",
-                  "animation": "adhoc-hoster-loading 3s ease-in-out infinite"
+                  "animation": "deck-p2p-loading 3s ease-in-out infinite"
                 }} />}
                 {!isLoading && isNetworkRunning && <FaBan size='1.4em' color="#ef5959" />}
                 {!isLoading && !isNetworkRunning && <FaPlay size='1.4em' color="lime" />}
@@ -97,10 +97,6 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
               </Focusable>
           </Focusable>
         </Field>
-
-        <PanelSection>
-          {/* TODO: run/kill button here */}
-        </PanelSection>
         
 
         {isNetworkRunning && (
