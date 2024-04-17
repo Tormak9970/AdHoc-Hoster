@@ -6,9 +6,86 @@ import decky_plugin
 from settings import SettingsManager
 from typing import TypeVar
 
+from websocket_server import WebsocketServer
+from threading import Thread
+import traceback
+
 
 Initialized = False
 T = TypeVar("T")
+
+def new_client(client, server, clients):
+  log("New client connected and was given id %d" % client['id'])
+  clients[client["id"]] = client
+  server.send_message_to_all("New Client joined")
+
+# Called for every client disconnecting
+def client_left(client, server, clients):
+  cid = client["id"]
+  try:
+    del clients[cid]
+    log("Client(%d) disconnected" % client['id'])
+  except Exception:
+    pass
+
+# Called when a client sends a message
+def message_received(client, server, message):
+  if len(message) > 200:
+    message = message[:200]+'..'
+  log("Client(%d) said: %s" % (client['id'], message))
+
+# TODO: make this send devices list
+def indicate(server, clients):
+  decky_plugin.logger.info(f"clients: {len(clients)}")
+  try:
+    for client in clients.values():
+      log("sending")
+      server.send_message(client, "pressed")
+      log("sent")
+  except Exception:
+    log(traceback.format_exc)
+  
+  log("happened")
+
+# TODO: make this periodically pole the network
+def keyboard_listener(server, clients):
+  keyboard.add_hotkey('ctrl+1', lambda: indicate(server, clients))
+  log("keyboard listener online")
+  keyboard.wait()
+
+def ws_server(server, clients):
+  server.set_fn_new_client(lambda x, y: new_client(x, y, clients))
+  server.set_fn_client_left(lambda x, y: client_left(x, y, clients))
+  server.set_fn_message_received(message_received)
+  log("ws online as well")
+  server.run_forever()
+
+# ! remove logging statements
+class WebsocketManager:
+  _thread_network_listener = None
+  _thread_ws = None
+  clients = {}
+
+  def __init__():
+    pass
+
+  def start(self):
+    try:
+      PORT=9371 # TODO: need to change this so it doesn't conflict with GrabBag
+      server = WebsocketServer(port = PORT)
+
+      self._thread_network_listener = Thread(target=lambda: keyboard_listener(server, self.clients))
+      self._thread_network_listener.daemon = True
+      self._thread_network_listener.start()
+
+      self._thread_ws = Thread(target=lambda: ws_server(server, self.clients))
+      self._thread_ws.daemon = True
+      self._thread_ws.start()
+
+      log("Initialized WebsocketManager")
+    except Exception:
+      error("main")
+
 
 # * Utility functions
 def log(txt):
