@@ -24,7 +24,7 @@ declare global {
 export default definePlugin((serverAPI: ServerAPI) => {
   PythonInterop.setServer(serverAPI);
   const pluginState = new PluginState()
-  PluginController.setup(serverAPI, pluginState);
+  PluginController.setup(pluginState);
 
   patchWifiSymbol(pluginState);
   const unregisterOnResume = SteamClient.System.RegisterForOnResumeFromSuspend(() => patchWifiSymbol(pluginState)).unregister;

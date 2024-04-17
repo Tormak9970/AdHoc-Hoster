@@ -1,4 +1,3 @@
-import { ServerAPI } from "decky-frontend-lib";
 import { PythonInterop } from "./PythonInterop";
 import { SteamController } from "./SteamController";
 import { LogController } from "./LogController";
@@ -9,25 +8,18 @@ import { getCurrentUserId } from "../Utils";
  * Main controller class for the plugin.
  */
 export class PluginController {
-  // * This gives you access to the server api from your main controller class.
-  private static server: ServerAPI;
-
   // * This gives you access to the plugin state from your main controller class.
   private static pluginState: PluginState;
 
   private static steamController: SteamController;
 
-  private static onWakeSub: Unregisterer;
-  private static onSleepSub: Unregisterer;
-
   /**
-   * Sets the plugin's serverAPI.
-   * @param server The serverAPI to use.
+   * Sets the plugin's serverAPI and pluginState.
+   * @param pluginState The pluginState instance.
    */
-  static setup(server: ServerAPI, pluginState: PluginState): void {
-    LogController.setup("Deck P2P", "90f709");
+  static setup(pluginState: PluginState): void {
+    LogController.setup("Deck P2P", "9683db");
 
-    this.server = server;
     this.pluginState = pluginState;
     this.steamController = new SteamController();
   }
@@ -61,7 +53,6 @@ export class PluginController {
     LogController.log("PluginController initialized.");
     await PythonInterop.setActiveSteamId(getCurrentUserId());
 
-
     const networkName = await PythonInterop.getNetworkName();
     if (typeof networkName !== "string") {
       // TODO: handle error
@@ -75,9 +66,6 @@ export class PluginController {
     } else {
       this.pluginState.setNetworkPassword(networkPassword);
     }
-    
-    this.onWakeSub = this.steamController.registerForOnResumeFromSuspend(this.onWakeFromSleep.bind(this));
-    // TODO: other subs here
 
     PluginController.listenForNetworkUpdates();
   }
@@ -96,26 +84,9 @@ export class PluginController {
   }
 
   /**
-   * Function to run before the deck is put to sleep.
-   */
-  static async onSleep() {
-    // TODO: if network is running, set that
-  }
-
-  /**
-   * Function to run when resuming from sleep.
-   */
-  static async onWakeFromSleep() {
-    // TODO: check if the network was running before the device was put to sleep
-  }
-
-  /**
    * Function to run when the plugin dismounts.
    */
   static dismount(): void {
-    if (this.onWakeSub) this.onWakeSub.unregister();
-    if (this.onSleepSub) this.onSleepSub.unregister();
-
     LogController.log("PluginController dismounted.");
   }
 }

@@ -74,7 +74,7 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
         <Field className="no-sep">
           <Focusable style={{ width: "100%", display: "flex" }}>
             <Focusable className="configure-btn" style={{ width: "calc(100% - 50px)" }}>
-              <DialogButton disabled={isNetworkRunning} onClick={() => showNetworkSettingsModal(pluginState)} onOKActionDescription={'Configure'}>
+              <DialogButton onClick={() => showNetworkSettingsModal(pluginState)} onOKActionDescription={'Configure'}>
                 Configure
               </DialogButton>
             </Focusable>

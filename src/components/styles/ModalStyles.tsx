@@ -43,6 +43,24 @@ export const ModalStyles: VFC<{}> = ({}) => {
         animation-fill-mode: forwards;
         animation-timing-function: cubic-bezier(0.17, 0.45, 0.14, 0.83);
       }
+
+
+      .deck-p2p-modal-scope .password-focusable .DialogInput_Wrapper._DialogLayout.Panel {
+        flex-grow: 1;
+      }
+
+      .deck-p2p-modal-scope .hide-show-button {
+        width: 40px !important;
+        min-width: 40px !important;
+        max-height: 40px;
+        padding: 9px !important;
+        margin-left: 7px !important;
+      }
+
+      .deck-p2p-modal-scope .hide-show-icon {
+        width: 1.3em !important;
+        height: 1.3em !important;
+      }
     `}</style>
   );
 }

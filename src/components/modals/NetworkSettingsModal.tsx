@@ -1,6 +1,8 @@
 import {
   ConfirmModal,
+  DialogButton,
   Field,
+  Focusable,
   TextField,
   afterPatch,
   quickAccessControlsClasses,
@@ -12,6 +14,7 @@ import { PluginContextProvider, usePluginState } from "../../state/PluginContext
 import { LogController } from "../../lib/controllers/LogController";
 import { PluginState } from "../../state/PluginState";
 import { PythonInterop } from "../../lib/controllers/PythonInterop";
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
 
 type NetworkSettingsModalProps = {
   closeModal?: () => void
@@ -21,12 +24,14 @@ type NetworkSettingsModalProps = {
  * The modal for editing the network settings.
  */
 const NetworkSettingsModal: VFC<NetworkSettingsModalProps> = ({ closeModal }) => {
-  const { networkName, setNetworkName, networkPassword, setNetworkPassword } = usePluginState();
+  const { networkName, setNetworkName, networkPassword, setNetworkPassword, isNetworkRunning } = usePluginState();
   
   const [localName, setLocalName] = useState<string>(networkName);
   const [localPassword, setLocalPassword] = useState<string>(networkPassword);
   const [canSave, setCanSave] = useState<boolean>(false);
   const [patchInput, setPatchInput] = useState<boolean>(true);
+
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   function onNetworkNameChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setLocalName(e.target?.value);
@@ -36,7 +41,7 @@ const NetworkSettingsModal: VFC<NetworkSettingsModalProps> = ({ closeModal }) =>
     setLocalPassword(e.target?.value);
   }
 
-  const nameInputElement = <TextField placeholder="Enter a name" onChange={onNetworkNameChange} value={localName} />
+  const nameInputElement = <TextField placeholder="Enter a name" onChange={onNetworkNameChange} value={localName} disabled={isNetworkRunning} />
 
   //reference to input field class component instance, which has a focus method
   let inputComponentInstance: any;
@@ -59,31 +64,35 @@ const NetworkSettingsModal: VFC<NetworkSettingsModalProps> = ({ closeModal }) =>
   }, [localName, localPassword]);
 
   async function onSave() {
-    if (canSave) {
-      let shouldSave = true;
-      
-      const nameSucceeded = await PythonInterop.setNetworkName(localName);
-      if (nameSucceeded) {
-        setNetworkName(localName);
+    if (!isNetworkRunning) {
+      if (canSave) {
+        let shouldSave = true;
+        
+        const nameSucceeded = await PythonInterop.setNetworkName(localName);
+        if (nameSucceeded) {
+          setNetworkName(localName);
+        } else {
+          PythonInterop.toast("Error", "Failed to set network name!");
+          shouldSave = false;
+        }
+  
+        const passwordSucceeded = await PythonInterop.setNetworkPassword(localPassword);
+        if (passwordSucceeded) {
+          setNetworkPassword(localPassword);
+        } else {
+          PythonInterop.toast("Error", "Failed to set network password!");
+          shouldSave = false;
+        }
+  
+        if (shouldSave) {
+          LogController.log("Saved Network Settings.");
+          closeModal!();
+        }
       } else {
-        PythonInterop.toast("Error", "Failed to set network name!");
-        shouldSave = false;
-      }
-
-      const passwordSucceeded = await PythonInterop.setNetworkPassword(localPassword);
-      if (passwordSucceeded) {
-        setNetworkPassword(localPassword);
-      } else {
-        PythonInterop.toast("Error", "Failed to set network password!");
-        shouldSave = false;
-      }
-
-      if (shouldSave) {
-        LogController.log("Saved Network Settings.");
-        closeModal!();
+        PythonInterop.toast("Can't Save Settings", "Please check that the name and password are long enough");
       }
     } else {
-      PythonInterop.toast("Can't Save Settings", "Please check that the name and password are long enough");
+      closeModal!();
     }
   }
 
@@ -115,14 +124,36 @@ const NetworkSettingsModal: VFC<NetworkSettingsModalProps> = ({ closeModal }) =>
           <div style={{ paddingBottom: "6px" }} className={quickAccessControlsClasses.PanelSectionTitle}>
             Password
           </div>
-          <TextField
-            placeholder="Enter a password"
-            onChange={onNetworkPasswordChange}
-            value={localPassword}
-            bIsPassword={true}
-            // @ts-ignore
-            type={"password"}
-          />
+          <Focusable className="password-focusable" style={{ display: "flex" }}>
+            {showPassword ? (
+              <TextField
+                placeholder="Enter a password"
+                onChange={onNetworkPasswordChange}
+                value={localPassword}
+                disabled={isNetworkRunning}
+              />
+            ) : (
+              <TextField
+                placeholder="Enter a password"
+                onChange={onNetworkPasswordChange}
+                value={localPassword}
+                bIsPassword={true}
+                disabled={isNetworkRunning}
+                // @ts-ignore
+                type={"password"}
+              />
+            )}
+            <DialogButton
+              className="hide-show-button"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {!showPassword ? (
+                <FaEye className="hide-show-icon" />
+              ) : (
+                <FaEyeSlash className="hide-show-icon" />
+              )}
+            </DialogButton>
+          </Focusable>
           <div style={{ fontSize: "12px", padding: "6px 0px" }}>Password for the network. Must be at least 8 characters</div>
         </>
         } />
