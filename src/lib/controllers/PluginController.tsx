@@ -84,7 +84,7 @@ export class PluginController {
       // TODO: handle message here
     });
 
-    LogController.log("")
+    LogController.log("Started listening on port 9395");
   }
 
   /**

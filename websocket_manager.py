@@ -14,7 +14,6 @@ def error_server(txt):
 
 
 def new_client(client, server, clients):
-  log_server(f"New client connected. id: {client['id']}")
   clients[client["id"]] = client
   server.send_message_to_all("New Client joined")
 
@@ -22,7 +21,6 @@ def client_left(client, server, clients):
   cid = client["id"]
   try:
     del clients[cid]
-    log_server(f"Client {client['id']} disconnected")
   except Exception:
     pass
 
@@ -44,7 +42,6 @@ def send_message(server, clients, message):
     log_server(traceback.format_exc)
 
 
-# TODO: make this periodically pole the network
 def monitor_network(server, clients, should_monitor):
   wait_time = 0.5 # TODO: find a good time balance
 
@@ -52,18 +49,18 @@ def monitor_network(server, clients, should_monitor):
 
   while True:
     time.sleep(wait_time)
-    message = None
 
     if should_monitor:
+      message = ""
       log_server("running monitor...")
       out = os.popen('ip neigh').read().splitlines()
 
-      # TODO: this needs to be tested
-      for i, line in enumerate(out, start=1):
+      # TODO: figure out how to detect when a device connects
+      for line in enumerate(out, start=1):
         ip = line.split(' ')[0]
-        h = os.popen('host {}'.format(ip)).read()
-        hostname = h.split(' ')[-1]
-        print("{:>3}: {} ({})".format(i, hostname.strip(), ip))
+        message = message + ip
+    else:
+      break
 
     if should_monitor and message != last_message:
       last_message = message
