@@ -41,7 +41,7 @@ export const QamStyles: VFC<{}> = ({}) => {
         background: #23262e;
       }
       
-      .deck-p2p-scope .no-sep .${gamepadDialogClasses.FieldLabel},
+      .deck-p2p-scope .no-sep.configure .${gamepadDialogClasses.FieldLabel},
       .deck-p2p-scope .no-sep .${gamepadDialogClasses.Field}.${gamepadDialogClasses.WithBottomSeparatorStandard}::after,
       .deck-p2p-scope .no-sep.${gamepadDialogClasses.Field}.${gamepadDialogClasses.WithBottomSeparatorStandard}::after {
         display: none
@@ -50,8 +50,12 @@ export const QamStyles: VFC<{}> = ({}) => {
       .deck-p2p-scope .no-sep .${gamepadDialogClasses.FieldChildren} {
         width: 100%;
       }
-      .deck-p2p-scope .no-sep .${(gamepadDialogClasses as any).FieldChildrenWithIcon} {
+      .deck-p2p-scope .no-sep.configure .${(gamepadDialogClasses as any).FieldChildrenWithIcon} {
         width: calc(100% - 10px);
+      }
+
+      .deck-p2p-scope .no-sep.toggles .${(gamepadDialogClasses as any).FieldChildrenWithIcon} {
+        margin-right: 7px
       }
 
       @keyframes deck-p2p-loading {

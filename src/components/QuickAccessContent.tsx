@@ -4,7 +4,7 @@ import { LogController } from "../lib/controllers/LogController";
 import { FaBan, FaCircleExclamation, FaPlay } from "react-icons/fa6";
 import { QamStyles } from "./styles/QamStyles";
 import { usePluginState } from "../state/PluginContext";
-import { DialogButton, Field, Focusable, PanelSection, ToggleField } from "decky-frontend-lib";
+import { DialogButton, Field, Focusable, ToggleField } from "decky-frontend-lib";
 import { showNetworkSettingsModal } from "./modals/NetworkSettingsModal";
 import { PluginState } from "../state/PluginState";
 import { PythonInterop } from "../lib/controllers/PythonInterop";
@@ -70,20 +70,16 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
           <br />
           <a href='https://github.com/Tormak9970/Deck-P2P/issues'>https://github.com/Tormak9970/Deck-P2P/issues</a>
           <br />
-          {/* TODO: once you make a forum post for support for your plugin, add it here */}
-          {/* or
+          or
           <br />
-          <a href='https://discord.com/channels/960281551428522045/1049449185214206053'>https://discord.com/channels/960281551428522045/1049449185214206053</a>
+          <a href='https://discord.com/channels/960281551428522045/1230576235789156425'>https://discord.com/channels/960281551428522045/1230576235789156425</a>
           <br />
-          for support. */}
+          for support.
         </div>
       </div>}
       <QamStyles />
       <Focusable>
-        {/* TODO: isRunning indicator */}
-        {/* TODO: styling will need work  */}
-
-        <Field className="no-sep">
+        <Field className="no-sep configure">
           <Focusable style={{ width: "100%", display: "flex" }}>
             <Focusable className="configure-btn" style={{ width: "calc(100% - 50px)" }}>
               <DialogButton onClick={() => showNetworkSettingsModal(pluginState)} onOKActionDescription={'Configure'}>
@@ -109,15 +105,14 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
               </Focusable>
           </Focusable>
         </Field>
-        
 
-        <PanelSection title="Settngs">
-            {/* TODO: show settings here */}
+        <div className="no-sep toggles" style={{ width: "100%" }}>
+          <div style={{ fontSize: "16px", fontWeight: 600, paddingLeft: "16px", color: "rgba(255,255,255,.7)" }}>SETTINGS</div>
 
-            <ToggleField label="Notifications" description="Show notifications when someone joins or leaves the network" onChange={handleNotificationsChange} checked={showNotifications} />
+          <ToggleField label="Notifications" description="Show notifications when someone joins or leaves the network" onChange={handleNotificationsChange} checked={showNotifications} />
 
-            <ToggleField label="Game Support" description="Show whether a game supports LAN play" onChange={handleGameSupportChange} checked={showGameSupport} />
-          </PanelSection>
+          <ToggleField label="Game Support" description="Show whether a game supports LAN play" onChange={handleGameSupportChange} checked={showGameSupport} />
+        </div>
       </Focusable>
     </div>
   );
