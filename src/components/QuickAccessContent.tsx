@@ -4,7 +4,7 @@ import { LogController } from "../lib/controllers/LogController";
 import { FaBan, FaCircleExclamation, FaPlay } from "react-icons/fa6";
 import { QamStyles } from "./styles/QamStyles";
 import { usePluginState } from "../state/PluginContext";
-import { DialogButton, Field, Focusable, PanelSection } from "decky-frontend-lib";
+import { DialogButton, Field, Focusable, PanelSection, ToggleField } from "decky-frontend-lib";
 import { showNetworkSettingsModal } from "./modals/NetworkSettingsModal";
 import { PluginState } from "../state/PluginState";
 import { PythonInterop } from "../lib/controllers/PythonInterop";
@@ -99,11 +99,14 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
         </Field>
         
 
-        {isNetworkRunning && (
-          <PanelSection title="Connections">
-            {/* TODO: list devices here */}
+        <PanelSection title="Settngs">
+            {/* TODO: show settings here */}
+
+            {/* TODO: show toast when someone connects */}
+            <ToggleField label="Notifications" description="Show notifications when someone joins or leaves the network" checked={} />
+
+            {/* TODO: show compat on game page */}
           </PanelSection>
-        )}
       </Focusable>
     </div>
   );

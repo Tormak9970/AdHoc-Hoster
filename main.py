@@ -199,6 +199,28 @@ class Plugin:
     Plugin.network_password = deobfuscate(Plugin.users_dict[Plugin.user_id]["networkPassword"])
     
     return Plugin.network_password or ""
+  
+  async def get_show_notifications(self) -> bool | None:
+    """
+    Waits until the users dictionary is loaded, then returns the whether the user wants to show notifications
+
+    @return: Whether the user wants to show notifications
+    """
+    while Plugin.users_dict is None:
+      await asyncio.sleep(0.1)
+    
+    return Plugin.users_dict[Plugin.user_id]["showNotifications"] or True
+  
+  async def get_show_game_support(self) -> bool | None:
+    """
+    Waits until the users dictionary is loaded, then returns the whether the user wants to show game support
+
+    @return: Whether the user wants to show game support
+    """
+    while Plugin.users_dict is None:
+      await asyncio.sleep(0.1)
+    
+    return Plugin.users_dict[Plugin.user_id]["showGameSupport"] or True
 
 
   # * Plugin settings setters
@@ -220,7 +242,9 @@ class Plugin:
 
       Plugin.users_dict[user_id] = {
         "networkName": "",
-        "networkPassword": ""
+        "networkPassword": "",
+        "showNotifications": True,
+        "showGameSupport": True
       }
       await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
 
@@ -274,6 +298,28 @@ class Plugin:
     else:
       Plugin.logMessage(self, "Failed to update connection password!", 2)
       return False
+    
+  async def set_show_notifications(self, should_show: bool) -> bool:
+    """
+    Sets the whether the user wants to show notifications
+
+    @param should_show (bool): Whether the user wants to show notifications
+    """
+
+    Plugin.users_dict[Plugin.user_id]["showNotifications"] = should_show
+    await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
+    return True
+  
+  async def set_show_game_support(self, should_show: bool) -> bool:
+    """
+    Sets the whether the user wants to show game support
+
+    @param should_show (bool): Whether the user wants to show game support
+    """
+
+    Plugin.users_dict[Plugin.user_id]["showGameSupport"] = should_show
+    await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
+    return True
 
   async def read(self) -> None:
     """

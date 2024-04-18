@@ -79,7 +79,8 @@ export class PluginController {
     PluginController.websocket = new WebSocket("ws://localhost:9395");
     PluginController.websocket.addEventListener('message', (event: MessageEvent) => {
       const update = event.data;
-      LogController.log(update);
+      // LogController.log(update);
+      console.log(event)
 
       // TODO: handle message here
     });

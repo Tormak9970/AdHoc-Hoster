@@ -3,6 +3,8 @@ export interface PublicPluginState {
   isNetworkRunning: boolean,
   networkName: string,
   networkPassword: string,
+  showNotifications: boolean,
+  showGameSupport: boolean,
   connectedDevices: string[]
 }
 
