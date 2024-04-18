@@ -100,6 +100,34 @@ export class PythonInterop {
       return new Error(result.result);
     }
   }
+  
+  /**
+   * Gets whether the user wants to show notifications.
+   * @returns Whether the user wants to show notifications, or an error if it failed
+   */
+  static async getShowNotifications(): Promise<boolean | Error> {
+    const result = await this.serverAPI.callPluginMethod<{}, boolean>("get_show_notifications", {});
+
+    if (result.success) {
+      return result.result;
+    } else {
+      return new Error(result.result);
+    }
+  }
+  
+  /**
+   * Gets whether the user wants to show game support.
+   * @returns Whether the user wants to show notifications, or an error if it game support.
+   */
+  static async getShowGameSupport(): Promise<boolean | Error> {
+    const result = await this.serverAPI.callPluginMethod<{}, boolean>("get_show_game_support", {});
+
+    if (result.success) {
+      return result.result;
+    } else {
+      return new Error(result.result);
+    }
+  }
 
 
   /**
@@ -124,6 +152,36 @@ export class PythonInterop {
    */
   static async setNetworkPassword(networkPassword: string): Promise<boolean | Error> {
     let result = await PythonInterop.serverAPI.callPluginMethod<{ net_password: string, }, boolean>("set_network_password", { net_password: networkPassword });
+
+    if (result.success) {
+      return result.result;
+    } else {
+      return new Error(result.result);
+    };
+  }
+
+  /**
+   * Sets the whether the user wants to show notifications
+   * @param shouldShow Whether the user wants to show notifications.
+   * @returns A promise resolving to whether or not the setting was successfully set.
+   */
+  static async setShowNotifications(shouldShow: boolean): Promise<boolean | Error> {
+    let result = await PythonInterop.serverAPI.callPluginMethod<{ should_show: boolean, }, boolean>("set_show_notifications", { should_show: shouldShow });
+
+    if (result.success) {
+      return result.result;
+    } else {
+      return new Error(result.result);
+    };
+  }
+
+  /**
+   * Sets the whether the user wants to show game support
+   * @param shouldShow Whether the user wants to show game support.
+   * @returns A promise resolving to whether or not the setting was successfully set.
+   */
+  static async setShowGameSupport(shouldShow: boolean): Promise<boolean | Error> {
+    let result = await PythonInterop.serverAPI.callPluginMethod<{ should_show: boolean, }, boolean>("set_show_game_support", { should_show: shouldShow });
 
     if (result.success) {
       return result.result;

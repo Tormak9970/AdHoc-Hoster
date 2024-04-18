@@ -103,9 +103,10 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
             {/* TODO: show settings here */}
 
             {/* TODO: show toast when someone connects */}
-            <ToggleField label="Notifications" description="Show notifications when someone joins or leaves the network" checked={} />
+            {/* <ToggleField label="Notifications" description="Show notifications when someone joins or leaves the network" checked={} /> */}
 
             {/* TODO: show compat on game page */}
+            {/* <ToggleField label="Game Support" description="Show whether a game supports LAN play" checked={} /> */}
           </PanelSection>
       </Focusable>
     </div>
