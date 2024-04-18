@@ -14,7 +14,7 @@ import { PythonInterop } from "../lib/controllers/PythonInterop";
  */
 export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginState }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const { isNetworkRunning, setIsNetworkRunning, connectedDevices } = usePluginState();
+  const { isNetworkRunning, setIsNetworkRunning, showNotifications, setShowNotifications, showGameSupport, setShowGameSupport } = usePluginState();
 
   async function handleButtonClick() {
     setIsLoading(true);
@@ -44,6 +44,18 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
         }
       });
     }
+  }
+
+  async function handleNotificationsChange(checked: boolean) {
+    setShowNotifications(checked);
+    await PythonInterop.setShowNotifications(checked);
+    LogController.log("Show Notifications:", checked);
+  }
+
+  async function handleGameSupportChange(checked: boolean) {
+    setShowGameSupport(checked);
+    await PythonInterop.setShowGameSupport(checked);
+    LogController.log("Show Game Support:", checked);
   }
 
   return (
@@ -102,11 +114,9 @@ export const QuickAccessContent: VFC<{ pluginState: PluginState }> = ({ pluginSt
         <PanelSection title="Settngs">
             {/* TODO: show settings here */}
 
-            {/* TODO: show toast when someone connects */}
-            {/* <ToggleField label="Notifications" description="Show notifications when someone joins or leaves the network" checked={} /> */}
+            <ToggleField label="Notifications" description="Show notifications when someone joins or leaves the network" onChange={handleNotificationsChange} checked={showNotifications} />
 
-            {/* TODO: show compat on game page */}
-            {/* <ToggleField label="Game Support" description="Show whether a game supports LAN play" checked={} /> */}
+            <ToggleField label="Game Support" description="Show whether a game supports LAN play" onChange={handleGameSupportChange} checked={showGameSupport} />
           </PanelSection>
       </Focusable>
     </div>

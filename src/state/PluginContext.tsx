@@ -30,6 +30,8 @@ export const PluginContextProvider: FC<ProviderProps> = ({
   const setIsNetworkRunning = (isRunning: boolean) => pluginState.setIsNetworkRunning(isRunning);
   const setNetworkName = (name: string) => pluginState.setNetworkName(name);
   const setNetworkPassword = (password: string) => pluginState.setNetworkPassword(password);
+  const setShowNotifications = (shouldShow: boolean) => pluginState.setShowNotifications(shouldShow);
+  const setShowGameSupport = (shouldShow: boolean) => pluginState.setShowGameSupport(shouldShow);
   const setConnectedDevices = (devices: string[]) => pluginState.setConnectedDevices(devices);
 
   return (
@@ -39,6 +41,8 @@ export const PluginContextProvider: FC<ProviderProps> = ({
         setIsNetworkRunning,
         setNetworkName,
         setNetworkPassword,
+        setShowNotifications,
+        setShowGameSupport,
         setConnectedDevices
       }}
     >

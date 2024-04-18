@@ -13,6 +13,8 @@ export interface PublicPluginContext extends PublicPluginState {
   setIsNetworkRunning(isRunning: boolean): void,
   setNetworkName(name: string): void,
   setNetworkPassword(password: string): void,
+  setShowNotifications(shouldShow: boolean): void,
+  setShowGameSupport(shouldShow: boolean): void,
   setConnectedDevices(connectedDevices: string[]): void
 }
 
@@ -21,6 +23,8 @@ export class PluginState {
   private isNetworkRunning = false;
   private networkName = "";
   private networkPassword = "";
+  private showNotifications = true;
+  private showGameSupport = true;
   private connectedDevices: string[] = [];
 
   public eventBus = new EventTarget();
@@ -30,6 +34,8 @@ export class PluginState {
       "isNetworkRunning": this.isNetworkRunning,
       "networkName": this.networkName,
       "networkPassword": this.networkPassword,
+      "showNotifications": this.showNotifications,
+      "showGameSupport": this.showGameSupport,
       "connectedDevices": this.connectedDevices
     }
   }
@@ -46,6 +52,16 @@ export class PluginState {
 
   setNetworkPassword(password: string): void {
     this.networkPassword = password;
+    this.forceUpdate();
+  }
+
+  setShowNotifications(shouldShow: boolean): void {
+    this.showNotifications = shouldShow;
+    this.forceUpdate();
+  }
+
+  setShowGameSupport(shouldShow: boolean): void {
+    this.showGameSupport = shouldShow;
     this.forceUpdate();
   }
 

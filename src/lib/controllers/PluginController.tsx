@@ -83,6 +83,10 @@ export class PluginController {
       console.log(event)
 
       // TODO: handle message here
+
+      if (this.pluginState.getPublicState().showNotifications) {
+        // TODO: show notification saying someone joined/left
+      }
     });
 
     LogController.log("Started listening on port 9395");
