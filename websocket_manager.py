@@ -1,0 +1,109 @@
+import time
+from websocket_server import WebsocketServer
+from threading import Thread
+import traceback
+import os
+
+import decky_plugin
+
+def log_server(txt):
+  decky_plugin.logger.info("[SERVER]: " + txt)
+  
+def error_server(txt):
+  decky_plugin.logger.error("[SERVER]: " + txt)
+
+
+def new_client(client, server, clients):
+  log_server(f"New client connected. id: {client['id']}")
+  clients[client["id"]] = client
+  server.send_message_to_all("New Client joined")
+
+def client_left(client, server, clients):
+  cid = client["id"]
+  try:
+    del clients[cid]
+    log_server(f"Client {client['id']} disconnected")
+  except Exception:
+    pass
+
+def message_received(client, server, message):
+  if len(message) > 200:
+    message = message[:200]+'..'
+    
+  log_server(f"Client {client['id']} sent: {message}")
+
+def send_message(server, clients, message):
+  log_server(f"clients: {len(clients)}")
+
+  try:
+    for client in clients.values():
+      log_server("sending")
+      server.send_message(client, message)
+      log_server("sent")
+  except Exception:
+    log_server(traceback.format_exc)
+
+
+# TODO: make this periodically pole the network
+def monitor_network(server, clients, should_monitor):
+  wait_time = 0.5 # TODO: find a good time balance
+
+  last_message = None
+
+  while True:
+    time.sleep(wait_time)
+    message = None
+
+    if should_monitor:
+      log_server("running monitor...")
+      out = os.popen('ip neigh').read().splitlines()
+
+      # TODO: this needs to be tested
+      for i, line in enumerate(out, start=1):
+        ip = line.split(' ')[0]
+        h = os.popen('host {}'.format(ip)).read()
+        hostname = h.split(' ')[-1]
+        print("{:>3}: {} ({})".format(i, hostname.strip(), ip))
+
+    if should_monitor and message != last_message:
+      last_message = message
+      send_message(server, clients, message)
+
+
+def ws_server(server, clients):
+  server.set_fn_new_client(lambda x, y: new_client(x, y, clients))
+  server.set_fn_client_left(lambda x, y: client_left(x, y, clients))
+  server.set_fn_message_received(message_received)
+  log_server("ws online")
+  server.run_forever()
+
+
+# ! remove logging statements
+class WebsocketManager:
+  network_listener_thread = None
+  websocket_thread = None
+  server = None
+  clients = {}
+  should_monitor = False
+
+  def __init__(self, port):
+    self.server = WebsocketServer(port = port)
+    self.websocket_thread = Thread(target=lambda: ws_server(self.server, self.clients))
+    self.websocket_thread.daemon = True
+    self.websocket_thread.start()
+    log_server("Started Websocket")
+
+  def start(self):
+    try:
+      self.should_monitor = True
+
+      self.network_listener_thread = Thread(target=lambda: monitor_network(self.server, self.clients, self.should_monitor))
+      self.network_listener_thread.daemon = True
+      self.network_listener_thread.start()
+    except Exception:
+      self.should_monitor = False
+      error_server("Websocket Manager failed")
+
+  def kill(self):
+    self.should_monitor = False
+    self.network_listener_thread = None

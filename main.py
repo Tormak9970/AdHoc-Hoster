@@ -2,113 +2,17 @@ import asyncio
 import subprocess
 import os
 import codecs
-import time
+import sys
 import decky_plugin
 from settings import SettingsManager
 from typing import TypeVar
 
-from websocket_server import WebsocketServer
-from threading import Thread
-import traceback
+sys.path.append(os.path.dirname(__file__))
 
+from websocket_manager import WebsocketManager
 
 Initialized = False
 T = TypeVar("T")
-
-def new_client(client, server, clients):
-  log(f"New client connected. id: {client['id']}")
-  clients[client["id"]] = client
-  server.send_message_to_all("New Client joined")
-
-def client_left(client, server, clients):
-  cid = client["id"]
-  try:
-    del clients[cid]
-    log(f"Client {client['id']} disconnected")
-  except Exception:
-    pass
-
-def message_received(client, server, message):
-  if len(message) > 200:
-    message = message[:200]+'..'
-    
-  log(f"Client {client['id']} sent: {message}")
-
-def send_message(server, clients, message):
-  log(f"clients: {len(clients)}")
-
-  try:
-    for client in clients.values():
-      log("sending")
-      server.send_message(client, message)
-      log("sent")
-  except Exception:
-    log(traceback.format_exc)
-
-# TODO: make this periodically pole the network
-def monitor_network(server, clients, should_monitor):
-  wait_time = 0.5 # TODO: find a good time balance
-
-  last_message = None
-
-  while True:
-    time.sleep(wait_time)
-    message = None
-
-    if should_monitor:
-      log("running monitor...")
-      out = os.popen('ip neigh').read().splitlines()
-
-      # TODO: this needs to be tested
-      for i, line in enumerate(out, start=1):
-        ip = line.split(' ')[0]
-        h = os.popen('host {}'.format(ip)).read()
-        hostname = h.split(' ')[-1]
-        print("{:>3}: {} ({})".format(i, hostname.strip(), ip))
-
-    if should_monitor and message != last_message:
-      last_message = message
-      send_message(server, clients, message)
-
-def ws_server(server, clients):
-  server.set_fn_new_client(lambda x, y: new_client(x, y, clients))
-  server.set_fn_client_left(lambda x, y: client_left(x, y, clients))
-  server.set_fn_message_received(message_received)
-  log("ws online")
-  server.run_forever()
-
-# ! remove logging statements
-class WebsocketManager:
-  _thread_network_listener = None
-  _thread_ws = None
-  clients = {}
-  should_monitor = False
-
-  def __init__():
-    pass
-
-  def start(self):
-    try:
-      self.should_monitor = True
-      PORT=9371 # TODO: need to change this so it doesn't conflict with GrabBag
-      server = WebsocketServer(port = PORT)
-
-      self._thread_network_listener = Thread(target=lambda: monitor_network(server, self.clients, self.should_monitor))
-      self._thread_network_listener.daemon = True
-      self._thread_network_listener.start()
-
-      self._thread_ws = Thread(target=lambda: ws_server(server, self.clients))
-      self._thread_ws.daemon = True
-      self._thread_ws.start()
-
-      log("Started Websocket")
-    except Exception:
-      self.should_monitor = False
-      error("Websocket Manager failed")
-
-  def kill(self):
-    self.should_monitor = False
-    self._thread_network_listener = None
 
 # * Utility functions
 def log(txt):
@@ -188,7 +92,7 @@ def uninstall_dnsmasq() -> bool:
 
 
 class Plugin:
-  websocket_manager: WebsocketManager = WebsocketManager()
+  websocket_manager: WebsocketManager = None
   settings: SettingsManager
 
   user_id: str = None
@@ -229,23 +133,6 @@ class Plugin:
 
 
   # * network functions
-  # ! Not verified
-  async def monitor_network_updates(self):
-    pass
-  
-  async def get_next_network_update(self) -> str:
-    """
-    Waits until there is a network update available, then returns it
-
-    @returns The network update
-    """
-    while len(Plugin.network_updates) == 0:
-      await asyncio.sleep(0.1)
-      
-    update = list.pop(0)
-    log(f"Sending update {update}")
-    return update
-
   async def start_network(self) -> bool:
     success = False
     
@@ -258,7 +145,7 @@ class Plugin:
 
     if down_result.returncode == 0 and result.returncode == 0:
       success = True
-      Plugin.should_monitor = True
+      Plugin.websocket_manager.start()
 
     return success
   
@@ -270,7 +157,7 @@ class Plugin:
 
     if result.returncode == 0:
       success = True
-      Plugin.should_monitor = False
+      Plugin.websocket_manager.kill()
 
     return success
 
@@ -312,19 +199,6 @@ class Plugin:
     Plugin.network_password = deobfuscate(Plugin.users_dict[Plugin.user_id]["networkPassword"])
     
     return Plugin.network_password or ""
-  
-  async def get_start_on_wake(self) -> str | None:
-    """
-    Waits until the users dictionary is loaded, then returns the user's start on wake
-
-    @return: Whether to start on wake from sleep
-    """
-    while Plugin.users_dict is None:
-      await asyncio.sleep(0.1)
-    
-    Plugin.start_on_wake = Plugin.users_dict[Plugin.user_id]["startOnWake"] or False
-    
-    return Plugin.start_on_wake
 
 
   # * Plugin settings setters
@@ -346,7 +220,6 @@ class Plugin:
 
       Plugin.users_dict[user_id] = {
         "networkName": "",
-        "startOnWake": False,
         "networkPassword": ""
       }
       await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
@@ -401,11 +274,6 @@ class Plugin:
     else:
       Plugin.logMessage(self, "Failed to update connection password!", 2)
       return False
-
-  async def set_start_on_wake(self, new_value: bool) -> bool:
-    Plugin.users_dict[Plugin.user_id]["startOnWake"] = new_value
-    await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
-    return True
 
   async def read(self) -> None:
     """
@@ -464,6 +332,8 @@ class Plugin:
 
     Initialized = True
 
+    PORT = 9395
+    Plugin.websocket_manager = WebsocketManager(PORT)
     Plugin.settings = SettingsManager(name="settings", settings_directory=os.environ["DECKY_PLUGIN_SETTINGS_DIR"])
     await Plugin.read(self)
 
@@ -488,8 +358,6 @@ class Plugin:
         log("Installed dnsmasq.")
     else:
       log("dnsmasq already installed.")
-
-    Plugin.monitor_network_updates(self)
 
 
   # * Function called first during the unload process, utilize this to handle your plugin being removed

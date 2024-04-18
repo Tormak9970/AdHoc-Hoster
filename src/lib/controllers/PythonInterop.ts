@@ -161,20 +161,6 @@ export class PythonInterop {
     }
   }
 
-  /**
-   * Gets the next network update.
-   * @returns The network update, or an error if it fails.
-   */
-  static async getNextNetworkUpdate(): Promise<string | Error> {
-    const result = await this.serverAPI.callPluginMethod<{}, string>("get_next_network_update", {});
-
-    if (result.success) {
-      return result.result;
-    } else {
-      return new Error(result.result);
-    }
-  }
-
 
   /**
    * Shows a toast message.

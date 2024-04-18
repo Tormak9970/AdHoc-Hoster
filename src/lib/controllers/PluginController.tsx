@@ -13,6 +13,8 @@ export class PluginController {
 
   private static steamController: SteamController;
 
+  private static websocket: WebSocket;
+
   /**
    * Sets the plugin's serverAPI and pluginState.
    * @param pluginState The pluginState instance.
@@ -71,22 +73,26 @@ export class PluginController {
   }
 
   /**
-   * Recursively listen for network updates.
+   * Listen for network updates.
    */
   private static async listenForNetworkUpdates(): Promise<void> {
-    // PythonInterop.getNextNetworkUpdate().then((update: string | Error) => {
-    //   LogController.log(update);
-      
-    //   // TODO: parse update and set connected devices.
+    PluginController.websocket = new WebSocket("ws://localhost:9395");
+    PluginController.websocket.addEventListener('message', (event: MessageEvent) => {
+      const update = event.data;
+      LogController.log(update);
 
-    //   PluginController.listenForNetworkUpdates();
-    // });
+      // TODO: handle message here
+    });
+
+    LogController.log("")
   }
 
   /**
    * Function to run when the plugin dismounts.
    */
   static dismount(): void {
+    PluginController.websocket.close(0);
+
     LogController.log("PluginController dismounted.");
   }
 }
