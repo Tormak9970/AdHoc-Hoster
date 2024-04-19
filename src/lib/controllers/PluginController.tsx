@@ -78,14 +78,22 @@ export class PluginController {
   private static async listenForNetworkUpdates(): Promise<void> {
     PluginController.websocket = new WebSocket("ws://localhost:9395");
     PluginController.websocket.addEventListener('message', (event: MessageEvent) => {
+      const { connectedDevices, showNotifications } = this.pluginState.getPublicState();
+      const oldDevicesLength = connectedDevices.length;
       const update = event.data;
       // LogController.log(update);
-      console.log(event)
+      console.log("event:", event);
 
       // TODO: handle message here
+      const newDevicesList = [];
 
-      if (this.pluginState.getPublicState().showNotifications) {
-        // TODO: show notification saying someone joined/left
+
+      if (showNotifications) {
+        if (oldDevicesLength < newDevicesList.length) {
+          PythonInterop.toast("LAN Update", "New device connected to network.");
+        } else if (oldDevicesLength > newDevicesList.length) {
+          PythonInterop.toast("LAN Update", "A device left the network.");
+        }
       }
     });
 

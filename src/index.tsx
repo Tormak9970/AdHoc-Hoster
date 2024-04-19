@@ -12,11 +12,12 @@ import { PluginContextProvider } from "./state/PluginContext";
 import { PluginState } from "./state/PluginState";
 import { QuickAccessContent } from "./components/QuickAccessContent";
 import { patchWifiSymbol, unpatchWifiSymbol } from "./patches/WifiSymbolPatch";
+import { patchGamePage } from "./patches/GamePagePatch";
 
 declare global {
   var SteamClient: SteamClient;
-  let collectionStore: CollectionStore;
   let loginStore: LoginStore;
+  let appStore: AppStore;
   // * This casing is correct, idk why it doesn't match the others.
   let securitystore: SecurityStore;
 }
@@ -27,8 +28,9 @@ export default definePlugin((serverAPI: ServerAPI) => {
   PluginController.setup(pluginState);
 
   patchWifiSymbol(pluginState);
+  const gamePagePatch = patchGamePage(serverAPI, pluginState);
+  
   const unregisterOnResume = SteamClient.System.RegisterForOnResumeFromSuspend(() => patchWifiSymbol(pluginState)).unregister;
-
   const loginUnregisterer = PluginController.initOnLogin(async () => { });
 
   return {
@@ -43,6 +45,7 @@ export default definePlugin((serverAPI: ServerAPI) => {
       unpatchWifiSymbol();
       unregisterOnResume();
       
+      serverAPI.routerHook.removePatch('/library/app/:appid', gamePagePatch);
       PluginController.dismount();
     },
   };
