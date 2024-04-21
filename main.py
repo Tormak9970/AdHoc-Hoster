@@ -431,6 +431,10 @@ class Plugin:
 
   # * Function called first during the unload process, utilize this to handle your plugin being removed
   async def _unload(self):
+    log("Unloading Deck P2P.")
+
+  # * Function called when the plugin is uninstalled
+  async def _uninstall(self):
     if Plugin.delete_connection():
       log("Successfully removed nmcli connection.")
     else:
@@ -449,8 +453,7 @@ class Plugin:
     else:
       log("rwfus already exists")
       
-    log("Unloading Deck P2P.")
-
+    log("Uninstalling Deck P2P.")
 
   # * Migrations that should be performed before entering `_main()`.
   async def _migration(self):
