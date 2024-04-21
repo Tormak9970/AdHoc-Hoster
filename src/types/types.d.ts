@@ -32,3 +32,4 @@ type UsersDict = {
   }
 }
 
+type IconPosition = "topLeft" | "topRight" | "bottomLeft" | "bottomRight";

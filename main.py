@@ -221,6 +221,17 @@ class Plugin:
       await asyncio.sleep(0.1)
     
     return Plugin.users_dict[Plugin.user_id]["showGameSupport"] or True
+  
+  async def get_game_support_position(self) -> str | None:
+    """
+    Waits until the users dictionary is loaded, then returns the game support icon's position
+
+    @return: The game support icon's position
+    """
+    while Plugin.users_dict is None:
+      await asyncio.sleep(0.1)
+    
+    return Plugin.users_dict[Plugin.user_id]["gameSupportPosition"] or "topRight"
 
 
   # * Plugin settings setters
@@ -244,7 +255,8 @@ class Plugin:
         "networkName": "",
         "networkPassword": "",
         "showNotifications": True,
-        "showGameSupport": True
+        "showGameSupport": True,
+        "gameSupportPosition": "topRight"
       }
       await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
 
@@ -318,6 +330,17 @@ class Plugin:
     """
 
     Plugin.users_dict[Plugin.user_id]["showGameSupport"] = should_show
+    await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
+    return True
+
+  async def set_game_support_position(self, position: str) -> bool:
+    """
+    Sets the game support icon's position
+
+    @param position (str): The game support icon position
+    """
+
+    Plugin.users_dict[Plugin.user_id]["gameSupportPosition"] = position
     await Plugin.set_setting(self, "usersDict", Plugin.users_dict)
     return True
 

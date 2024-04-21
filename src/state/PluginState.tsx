@@ -5,6 +5,7 @@ export interface PublicPluginState {
   networkPassword: string,
   showNotifications: boolean,
   showGameSupport: boolean,
+  gameSupportIconPosition: IconPosition,
   connectedDevices: string[]
 }
 
@@ -15,6 +16,7 @@ export interface PublicPluginContext extends PublicPluginState {
   setNetworkPassword(password: string): void,
   setShowNotifications(shouldShow: boolean): void,
   setShowGameSupport(shouldShow: boolean): void,
+  setGameSupportIconPosition(position: IconPosition): void,
   setConnectedDevices(connectedDevices: string[]): void
 }
 
@@ -25,6 +27,7 @@ export class PluginState {
   private networkPassword = "";
   private showNotifications = true;
   private showGameSupport = true;
+  private gameSupportIconPosition: IconPosition = "topRight";
   private connectedDevices: string[] = [];
 
   public eventBus = new EventTarget();
@@ -36,6 +39,7 @@ export class PluginState {
       "networkPassword": this.networkPassword,
       "showNotifications": this.showNotifications,
       "showGameSupport": this.showGameSupport,
+      "gameSupportIconPosition": this.gameSupportIconPosition,
       "connectedDevices": this.connectedDevices
     }
   }
@@ -62,6 +66,11 @@ export class PluginState {
 
   setShowGameSupport(shouldShow: boolean): void {
     this.showGameSupport = shouldShow;
+    this.forceUpdate();
+  }
+
+  setGameSupportIconPosition(position: IconPosition): void {
+    this.gameSupportIconPosition = position;
     this.forceUpdate();
   }
 
