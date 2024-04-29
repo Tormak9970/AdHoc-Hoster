@@ -2,7 +2,7 @@ import time
 from websocket_server import WebsocketServer
 from threading import Thread
 import traceback
-import os
+import subprocess
 
 import decky_plugin
 
@@ -43,28 +43,33 @@ def send_message(server, clients, message):
 
 
 def monitor_network(server, clients, should_monitor):
-  wait_time = 0.5 # TODO: find a good time balance
+  wait_time = 1.0 # TODO: find a good time balance
 
   last_message = None
 
   while True:
     time.sleep(wait_time)
 
-    if should_monitor:
-      message = ""
-      log_server("running monitor...")
-      out = os.popen('ip neigh').read().splitlines()
+    # if should_monitor:
+    #   message = ""
+    #   log_server("running monitor...")
+    #   out = subprocess.run(["./getConnectedDevices.sh"], cwd=decky_plugin.DECKY_PLUGIN_DIR, timeout=10, shell=True, capture_output=True, text=True)
 
-      # TODO: figure out how to detect when a device connects
-      for line in enumerate(out, start=1):
-        ip = line.split(' ')[0]
-        message = message + ip
-    else:
-      break
+    #   # TODO: figure out how to detect when a device connects
+    #   # for line in enumerate(out, start=1):
+    #   #   ip = line.split(' ')[0]
+    #   #   message = message + ip
+    #   log_server(out)
+    # else:
+    #   break
+    message = ""
+    log_server("running monitor...")
+    out = subprocess.run(["./getConnectedDevices.sh"], cwd=decky_plugin.DECKY_PLUGIN_DIR, timeout=10, shell=True, capture_output=True, text=True)
+    log_server(out)
 
-    if should_monitor and message != last_message:
-      last_message = message
-      send_message(server, clients, message)
+    # if should_monitor and message != last_message:
+    #   last_message = message
+    #   send_message(server, clients, message)
 
 
 def ws_server(server, clients):

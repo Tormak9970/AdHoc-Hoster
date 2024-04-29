@@ -57,14 +57,14 @@ export class PluginController {
 
     const networkName = await PythonInterop.getNetworkName();
     if (typeof networkName !== "string") {
-      // TODO: handle error
+      LogController.raiseError("Unable to load network name from settings.json");
     } else {
       this.pluginState.setNetworkName(networkName);
     }
 
     const networkPassword = await PythonInterop.getNetworkPassword();
     if (typeof networkPassword !== "string") {
-      // TODO: handle error
+      LogController.raiseError("Unable to load network password from settings.json");
     } else {
       this.pluginState.setNetworkPassword(networkPassword);
     }
@@ -80,7 +80,7 @@ export class PluginController {
     PluginController.websocket.addEventListener('message', (event: MessageEvent) => {
       const { connectedDevices, showNotifications } = this.pluginState.getPublicState();
       const oldDevicesLength = connectedDevices.length;
-      const update = event.data;
+      // const update = event.data;
       // LogController.log(update);
       console.log("event:", event);
 
